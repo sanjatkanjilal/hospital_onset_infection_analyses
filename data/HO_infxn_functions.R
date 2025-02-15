@@ -1100,18 +1100,21 @@ generate_unmatched_data <- function(pathogen_hierarchy,
   print("Filter ADT micro data for proper micro hierarchy")
   tic()
   adt.micro.raw.filtered <- adt_micro_hierarchy(adt.micro.raw, pathogen_hierarchy)
+  print(length(unique(adt.micro.raw.filtered[['PatientEncounterID']])))
   toc()
   
   # Flag hospitalizations where the pathogen of interest was identified after day X (set by user) and before day 30 in the first eligible room 
   print(paste0("Identify potential cases of ", pathogen_category))
   tic()
   adt.micro.raw.filtered <- potential_cases(adt.micro.raw.filtered, pathogen_category, day_threshold) 
+  initial_case = nrow(adt.micro.raw.filtered %>% filter(potential_case == 'X'))
   toc()
   
   # Drop subsequent potential cases after first case identified in an eligible room (including ones with same timestamp)
   print(paste0("Remove potential cases identified in room stays after the first case in an episode"))
   tic()
   adt.micro.raw.filtered <- after_first_room(adt.micro.raw.filtered, pathogen_category, day_threshold) 
+  drop_subsequent = nrow(adt.micro.raw.filtered %>% filter(potential_case == 'X'))
   toc()
   
   # Exclude hospitalizations where the patient had the pathogen of interest between day -365 (S. aureus, Enterococcus) / day -182.5 (all others)
@@ -1119,13 +1122,44 @@ generate_unmatched_data <- function(pathogen_hierarchy,
   print(paste0("Remove potential cases that have evidence of prior infection with ", pathogen_category))
   tic()
   adt.micro.cases <- flag_prior_infxn(adt.micro.raw.filtered, pathogen_category, day_threshold) 
+  drop_prior_infxn = nrow(adt.micro.cases %>% filter(potential_case == 'X'))
+  print(drop_prior_infxn)
   toc()
+  
+  potential_case <- adt.micro.cases %>% filter(potential_case == 'X')
+  
+  # ## Exclude hospitalizations where have prior antibiotic prescription
+  # subgroup_abx_prelim <- abx_prelim %>% filter(patientID %in% potential_case$PatientID)
+  # subgroup_abx_prelim <- merge(subgroup_abx_prelim,
+  #                              potential_case,
+  #                              by.x='patientID',
+  #                              by.y='PatientID')
+  # subgroup_abx_prelim <- subgroup_abx_prelim %>% select(patientID, hospitalization_id, taken_DT, DTS_in)
+  # subgroup_abx_prelim[['abx_bound_lower']] = as.Date(subgroup_abx_prelim[['DTS_in']]) - 7
+  # subgroup_abx_prelim[['abx_bound_upper']] = as.Date(subgroup_abx_prelim[['DTS_in']])
+  # subgroup_abx_prelim <- subgroup_abx_prelim %>% filter(taken_DT > abx_bound_lower) %>% filter(taken_DT < abx_bound_upper)
+  
+  # adt.micro.cases <- adt.micro.cases %>% filter(! (hospitalization_id %in% subgroup_abx_prelim$hospitalization_id))
+  
+  
+  drop_abx <- nrow(adt.micro.cases %>% filter(potential_case == 'X'))
+  print(drop_abx)
   
   # Select controls (for matching later)
   print("Select preliminary controls")
   tic()
   adt.micro.cc <- generate_controls(adt.micro.cases, pathogen_category) 
   toc()
+  
+  row <- data.frame(
+    pathogen = pathogen_category,
+    initial_cases = initial_case,
+    case_after_drop_subsequent = drop_subsequent,
+    case_after_drop_prior_infection = drop_prior_infxn,
+    case_after_drop_abx = drop_abx
+  )
+  
+  flow_chart <<- rbind(flow_chart, row)
   
   return(adt.micro.cc)
 }
@@ -1240,7 +1274,7 @@ environmental.matching_process <- function(pathogen_category,
   # Apply tolerance for some matching
   m_out <- m_out %>% 
     filter(group == "case" | group == "control" & (age_diff <= 5)) %>% 
-    filter(group == "case" | group == "control" & (elix_diff <= 3)) %>% 
+    filter(group == "case" | group == "control" & (elix_diff <= 5)) %>% 
     filter(group == "case" | group == "control" & (matching_duration <= 3 | matching_duration <= (0.1 * matching_duration[group == "case"]))) %>% 
     filter(any(group == "case") & any(group == "control")) 
   

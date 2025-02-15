@@ -37,11 +37,13 @@ conflicts_prefer(reshape2::melt)
 conflicts_prefer(reshape2::dcast)
 
 # Set working directory and output directory to be whatever you generate today
-mainDir <- "~/ho_infxn_clean_code/"
+mainDir <- "/data/tide/projects/ho_infxn_ml"
 setwd(file.path(mainDir))
 
+today = '20250214_elix-tolerance=5'
+
 #### IMPORT DATASETS ####
-cc_final <- data.table::fread(file = "results/dataset/final_dataset_for_models.csv")
+cc_final <- data.table::fread(file = paste0("clean_data/",today,"/final_dataset_for_models_",today,".csv"))
 
 #### SET UP MODELS ####
 
@@ -79,6 +81,8 @@ clr <- do.call(bind_rows,
                                    prior_path_target <- paste0("prior_", y)
                                    print(paste("Environmental match regression for", y))
                                    dat.run <- dat.run %>% select(group_binary, group_index, CDiff_cp:DR_PsA_cp)
+                                   # dat.run <- dat.run %>% select(group_binary, group_index, indiv_score, CDiff_cp:DR_PsA_cp)
+                                   # dat.run <- dat.run %>% select(group_binary, group_index, starts_with("elix_"), CDiff_cp:DR_PsA_cp)
                                    dat.run <- dat.run %>% select(where(~n_distinct(.) > 1))
                                    
                                    form1 = as.formula(paste("group_binary ~", paste(names(dat.run)[3:ncol(dat.run)], collapse = "+"), paste("+ strata(group_index)")))
@@ -173,11 +177,11 @@ clr <- clogit_coefficients %>%
   mutate(sig_flag = ifelse(pval < 0.05, "*", NA))
 
 # Save Output file for Conditional logistic regression models
-write.csv(env_dat_with_pred, file = "results/model_results/clr/environmental_colonization_pressure_with_pred.csv", 
+write.csv(env_dat_with_pred, file = paste0("results/model_results/",today,"/clr/environmental_colonization_pressure_with_pred.csv"), 
           row.names = FALSE, na = "")
-write.csv(clr, file = "results/model_results/clr/clr_coefficients.csv", 
+write.csv(clr, file = paste0("results/model_results/",today,"/clr/clr_coefficients.csv"), 
           row.names = FALSE, na = "")
-write.csv(clogit_metrics_integrated, file = "results/model_results/clr/clr_model_performance.csv",
+write.csv(clogit_metrics_integrated, file = paste0("results/model_results/",today,"/clr/clr_model_performance.csv"),
           row.names = FALSE, na = "")
 
 #### XGBOOST MODELS ####
@@ -190,8 +194,8 @@ env_dat_with_pred <- data.frame()
 patient_dat_with_pred <- data.frame()
 
 # XGBoost with 5-fold cross-validation for environmental analysis
-env_dat_with_pred <- data.table::fread(file = "results/model_results/xgb/environmental_match_predictions.csv")
-xgboost_metrics <- data.table::fread(file = "results/model_results/xgb/xgboost_metrics.csv")
+# env_dat_with_pred <- data.table::fread(file = paste0("results/model_results/",today,"/xgb/environmental_match_predictions.csv"))
+# xgboost_metrics <- data.table::fread(file = paste0("results/model_results/",today,"/xgb/xgboost_metrics.csv"))
 
 # Running XGBoost environmental matching
 run_xgboost_environmental <- function(y){
@@ -271,7 +275,7 @@ run_xgboost_environmental <- function(y){
       importance_list[[i]] <- xgb.importance(model = xgb_model)
       
       # Save the models
-      output_dir = paste0("results/model_results/xgb/model_checkpoints/environmental_", y)
+      output_dir = paste0("results/model_results/",today,"/xgb/model_checkpoints/environmental_", y)
       if (!dir.exists(output_dir)){
         dir.create(output_dir)
       } 
@@ -366,8 +370,8 @@ for (rubric in matching_rubric){
     for (target in remaining_targets){
       cat(paste0("Running environmental match models for target: ", target), "\n\n")
       run_xgboost_environmental(target)
-      write.csv(env_dat_with_pred, "results/model_results/xgb/environmental_match_predictions.csv", row.names = FALSE)
-      write.csv(xgboost_metrics, "results/model_results/xgb/xgboost_metrics.csv", row.names = FALSE)
+      write.csv(env_dat_with_pred, paste0("results/model_results/",today,"/xgb/environmental_match_predictions.csv"), row.names = FALSE)
+      write.csv(xgboost_metrics, paste0("results/model_results/",today,"/xgb/xgboost_metrics.csv"), row.names = FALSE)
     }
   }
 }

@@ -29,11 +29,11 @@ conflicts_prefer(data.table::shift)
 #### SET ENVIRONMENT VARIABLES ####
 
 # Set working directory and output directory to be whatever you generate today
-mainDir <- "~/ho_infxn_clean_code/"
+mainDir <- "/data/tide/projects/ho_infxn_ml/"
 setwd(file.path(mainDir))
 
 # Import the functions for the pipeline
-source("~/ho_infxn_clean_code/data/HO_infxn_functions.R")
+source("~/colonization-pressure_HAI/data/HO_infxn_functions.R")
 
 # Global paths
 micro_filename <- "micro.ground_truth_20150525-20240701.csv"
@@ -41,13 +41,15 @@ adt_filename <- "MGB_ADT_20140131-20240713.csv"
 abx_filename <- "MGB_abx_20150323-20240715.csv"
 abx_mapping_filename <- "EDW_abx_map_20150525-20240716.csv"
 dems_filename <- "MGB_demographics_20240715.csv"
-# elix_filename <-"MGB_elixhauser_20240715.csv"
-elix_filename <- "MGB_elixhauser_20241105.csv"
+# elix_filename <- "MGB_elixhauser_20241105.csv"
+elix_filename <- "elixhauser-ho-infxn-ml.csv"
 cpt_filename <- "MGB_procedures_20240715.csv"
 admt_filename <- "MGB_IP_ED_encounters_20150430-20240715.csv"
 location_map_filename <- "department_mapping.csv"
 # enc_filename <- "MGB_encounters_20240715.csv"
 enc_filename <- "MGB_encounters_20241105.csv"
+
+today = '20250214_elix-tolerance=5'
 
 #### IMPORT AND PREP DATASETS FOR COHORT BUILDING PIPELINE ####
 
@@ -125,6 +127,7 @@ pathogen_hierarchy <- "org_group_3"
 write_csv(path_cat_table, file = paste0("clean_data/",  today, "/path_cat_table.csv"))
 
 # Identify cases / controls for each organism in the table above
+flow_chart <- data.frame()
 cc.unmatched <- do.call(bind_rows, 
                         lapply(levels(factor(path_cat_table$pathogen_category)), function(y) 
                         {
@@ -152,6 +155,8 @@ cc.unmatched <- do.call(bind_rows,
                           # Ensure the last expression in the function is the dataset
                           return(unmatched_cc)
                         }))
+
+print(flow_chart)
 
 cc.unmatched <- cc.unmatched %>%
   arrange(hospitalization_id, room_stay_id) %>%
@@ -195,7 +200,7 @@ write_csv(abx_features, file = paste0("clean_data/",  today, "/abx_", pathogen_h
 rm(abx_features.prelim)
 
 # Comorbidities
-elix <- read_csv(paste0("/data/tide/data/edw/diagnoses/", elix_filename)) %>%
+elix <- read_csv("/data/tide/projects/ho_infxn_ml/elixhauser-ho-infxn-ml.csv") %>%
   rename("indiv_score" = "elix_index_mortality") %>%
   select(PatientEncounterID, indiv_score, elix_AIDS:elix_CBVD) %>%
   mutate(PatientEncounterID = as.numeric(PatientEncounterID))
@@ -249,16 +254,16 @@ write_csv(cp_features, file = paste0("clean_data/",  today, "/col_pressure_", pa
 
 # Import datasets as needed
 # micro <- read_csv(file = paste0("clean_data/",  today, "/micro.csv"))
-# path_cat_table <- read_csv(file = paste0("clean_data/", today, "/path_cat_table.csv"))
-# adt.micro.raw <- read_csv(file = paste0("clean_data/", today, "/adt_micro_raw.csv"))
-# cc.unmatched <- read_csv(file = paste0("clean_data/",  today, "/unmatched_case_controls_no_features_org_group_3.csv"))
-# dem_features <- read_csv(file = paste0("clean_data/",  today, "/dems_org_group_3.csv"))
-# abx_features <- read_csv(file = paste0("clean_data/",  today, "/abx_org_group_3.csv"))
-# elix_features <- read_csv(file = paste0("clean_data/",  today, "/elix_org_group_3.csv"))
-# cpt_features <- read_csv(file = paste0("clean_data/",  today, "/cpt_org_group_3.csv"))
-# admt_features <- read_csv(file = paste0("clean_data/",  today, "/admt_org_group_3.csv"))
-# prior_occupant_features <- read_csv(file = paste0("clean_data/20240715/prior_occupant_org_group_3.csv"))
-# cp_features <- read_csv(file = paste0("clean_data/",  today, "/col_pressure_org_group_3.csv"))
+path_cat_table <- read_csv(file = paste0("clean_data/", today, "/path_cat_table.csv"))
+adt.micro.raw <- read_csv(file = paste0("clean_data/", today, "/adt_micro_raw.csv"))
+cc.unmatched <- read_csv(file = paste0("clean_data/",  today, "/unmatched_case_controls_no_features_org_group_3.csv"))
+dem_features <- read_csv(file = paste0("clean_data/",  today, "/dems_org_group_3.csv"))
+abx_features <- read_csv(file = paste0("clean_data/",  today, "/abx_org_group_3.csv"))
+elix_features <- read_csv(file = paste0("clean_data/",  today, "/elix_org_group_3.csv"))
+cpt_features <- read_csv(file = paste0("clean_data/",  today, "/cpt_org_group_3.csv"))
+admt_features <- read_csv(file = paste0("clean_data/",  today, "/admt_org_group_3.csv"))
+prior_occupant_features <- read_csv(file = paste0("clean_data/",today,"/prior_occupant_org_group_3.csv"))
+cp_features <- read_csv(file = paste0("clean_data/",today,"/col_pressure_org_group_3.csv"))
 
 path_cat_table_matching <- cc.unmatched %>%
   gather(run, group, C_diff:VSE_faecium) %>%
@@ -348,54 +353,46 @@ environment.matched <- do.call(bind_rows,
                                
                                }))
 
-patient.matched <- do.call(bind_rows,
-                               lapply(levels(factor(path_cat_table_matching$pathogen_category)), function(y) 
-                                 
-                               {
-                                 print(paste("Matching cases to controls for patient-level analysis for", y))
-                                 
-                                 pathogen_hierarchy <- unique(path_cat_table_matching$pathogen_hierarchy)
-                                 
-                                 unmatched_features.pathogen <- unmatched_features %>%
-                                   filter(run == y)
-                                 
-                                 # Add matching features to case / control data
-                                 tic()
-                                 
-                                 matched_features.pathogen <- patient.matching_process(pathogen_category = y,
-                                                                                             dat = unmatched_features.pathogen)
-                                 
-                                 toc()
-                                 
-                                 # Compile data across each pathogen category
-                                 matched_cc <- as.data.frame(cbind(matched_features.pathogen))
-                                 
-                               }))
+# patient.matched <- do.call(bind_rows,
+#                                lapply(levels(factor(path_cat_table_matching$pathogen_category)), function(y) 
+#                                  
+#                                {
+#                                  print(paste("Matching cases to controls for patient-level analysis for", y))
+#                                  
+#                                  pathogen_hierarchy <- unique(path_cat_table_matching$pathogen_hierarchy)
+#                                  
+#                                  unmatched_features.pathogen <- unmatched_features %>%
+#                                    filter(run == y)
+#                                  
+#                                  # Add matching features to case / control data
+#                                  tic()
+#                                  
+#                                  matched_features.pathogen <- patient.matching_process(pathogen_category = y,
+#                                                                                              dat = unmatched_features.pathogen)
+#                                  
+#                                  toc()
+#                                  
+#                                  # Compile data across each pathogen category
+#                                  matched_cc <- as.data.frame(cbind(matched_features.pathogen))
+#                                  
+#                                }))
 
 # Bind environmental and patient-level matched datasets with features
 environment.matched <- environment.matched %>%
   mutate(match = "environmental")
 
-patient.matched <- patient.matched %>%
-  mutate(match = "patient")
+# patient.matched <- patient.matched %>%
+#   mutate(match = "patient")
 
-matched.final <- bind_rows(environment.matched, patient.matched) %>%
+matched.final <- environment.matched %>% # bind_rows(environment.matched, patient.matched) %>%
   select(match, run:group, group_index, PatientID:DR_PsA_cp) %>%
   distinct()
 
 # Save matched patient-level dataset + features
 # write_csv(matched.final, file = paste0("clean_data/",  today, "/final_cohort_", pathogen_hierarchy, ".csv"))
-write_csv(matched.final, file = paste0("clean_data/",  today, "/final_cohort_age_filtered_", pathogen_hierarchy, ".csv"))
+# write_csv(matched.final, file = paste0("clean_data/",  today, "/final_cohort_age_filtered_", pathogen_hierarchy, ".csv"))
 
 #### FINAL DATASET CLEAN / PREP FOR MODELS####
-
-# Check sample sizes
-sample_sizes <- matched.final %>%
-  select(match:PatientID) %>%
-  distinct() %>%
-  group_by(match, run, group) %>%
-  summarize(sample_size = n()) %>%
-  ungroup()
 
 # Check for missingness
 percent_missing_values <- matched.final %>%
@@ -423,7 +420,9 @@ variables_to_drop <- names(matched.final.models)[grepl("_0_60$", names(matched.f
 
 matched.final.models <- matched.final.models %>% 
   select(match:group, group_index, group_binary, PatientID, DTS_in_month, DTS_in_year, duration,
-         time_to_infxn, age, sex, indiv_score, any_surgery, admit_source_clean, 
+         time_to_infxn, age, sex, 
+         # starts_with("elix_"), 
+         indiv_score, any_surgery, admit_source_clean, 
          any_abx_0_60:other_abx_0_60, prior_C_diff:DR_PsA_cp) %>%
   select(-all_of(variables_to_drop)) %>%
   select(-matches("60_plus"))
@@ -439,14 +438,22 @@ matched.final.models <- matched.final.models %>%
 # Recheck missingness
 colSums(is.na(matched.final.models))
 
-today = '20241210'
+# today = '20241210'
 
 # Save file
+# Check sample sizes
+sample_sizes <- matched.final.models %>%
+  select(match:PatientID) %>%
+  distinct() %>%
+  group_by(match, run, group) %>%
+  summarize(sample_size = n()) %>%
+  ungroup()
+
 write_csv(sample_sizes,file = paste0("clean_data/", today, "/sample_sizes_", today, ".csv"))
 
 # write_csv(matched.final.models, file = paste0("clean_data/", today, "/both_matched_final_dataset_for_models_", today, ".csv"))
-write_csv(matched.final.models, file = paste0("clean_data/", today, "/age_filtered_final_dataset_for_models_", today, ".csv"))
-write_csv(matched.final.models, file = '~/hospital_onset_personal_folder/patient_below90_final_dataset.csv')
+write_csv(matched.final.models, file = paste0("clean_data/", today, "/final_dataset_for_models_", today, ".csv"))
+# write_csv(matched.final.models, file = '~/hospital_onset_personal_folder/patient_below90_final_dataset.csv')
 
 #### CLEAN UP ####
 

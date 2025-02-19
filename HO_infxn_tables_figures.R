@@ -627,6 +627,46 @@ rm(cp, enterobacterales.cp, esbl.cp, vse.cp, vre.cp, mssa.cp,
    mrsa.cp, psa.ds.cp, psa.dr.cp, cp_percentile, cp.final)
 
 #### SHAP value plots ####
+all_runs = unique(cc_final$run)
+
+cp_colnames = cc_final %>% select(CDiff_cp:DR_PsA_cp) %>% colnames()
+
+for (run_name in all_runs){
+  for (fold in c(1,2,3,4,5)){
+    model = xgb.load(paste0('results/model_results/20250217/xgb/model_checkpoints/environmental_', run_name ,'/fold_',fold,'.model'))
+    
+    dat.run <- cc_final %>% filter(run == run_name & match == 'environmental')
+    dat.run <- dat.run %>% select(CDiff_cp:DR_PsA_cp)
+    dat.run <- dat.run %>% select(where(~n_distinct(.) > 1)) # Remove features with only 1 value among samples
+    dat.run <- as.matrix(dat.run)
+    
+    shap_values <- shap.values(xgb_model = model, X_train = dat.run)
+    shap_values <- shap_values$shap_score
+    
+    shap_long <- shap.prep(xgb_model = model, X_train = dat.run)
+    shap_long <- shap.prep(shap_contrib = shap_values, X_train = dat.run)
+    
+    shap_long <- shap_long[order(shap_long$ID, factor(shap_long$variable, levels = cp_colnames)),]
+    
+    if (fold == 1) {
+      shap_list = copy(shap_long)
+    }else{
+      shap_list[,3:6] = shap_list[,3:6] + shap_long[,3:6,]
+    }
+    
+  }
+  
+  # Print the result
+  shap_list[,3:6] = shap_list[,3:6] / 5
+  
+  plot <- shap.plot.summary(shap_long)
+  
+  ggsave(filename = paste0('results/model_results/20250217/xgb/shap_plots/environmental_', run_name,'_shap_summary.pdf'), 
+         plot = plot, 
+         width = 8, 
+         height = 6)
+  
+}
 
 #### GLOBAL CLEAN UP ####
 rm(mainDir, cc_final, clr.results)

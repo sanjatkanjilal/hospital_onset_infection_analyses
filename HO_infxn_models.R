@@ -157,6 +157,171 @@ readr::write_csv(clr.final, file = paste0("results/model_results/20250217/clogit
 
 #### XGBOOST MODELS ####
 
+xgboost_metrics <- data.frame()
+xgboost_feature_importance <- data.frame()
+env_dat_with_pred <- data.frame()
+
+# Running XGBoost environmental matching
+run_xgboost_environmental <- function(y){
+  
+  # Filter for dataset to contain the focused pathogent
+  dat.run <- dat.match %>% filter(run == y)
+  
+  # Select Features to include in training the conditional logistic regression model
+  prior_path_target <- paste0("prior_", y)
+  print(paste("Environmental match regression for", y))
+  dat.run <- dat.run %>% select(group_binary, CDiff_cp:DR_PsA_cp)
+  dat.run <- dat.run %>% select(where(~n_distinct(.) > 1)) # Remove features with only 1 value among samples
+  
+  # One-hot encode non-numeric columns
+  data_encoded <- dat.run %>%
+    mutate(across(where(is.character), as.factor)) %>%
+    model.matrix(~ . - 1, data = .)
+  
+  # 5-fold cross-validation setup
+  folds <- createFolds(data_encoded[, "group_binary"], k = 5, list = TRUE, returnTrain = FALSE)
+  auc_values <- c()
+  auprc_values <- c()
+  importance_list <- list()
+  shap_value_list <- list()
+  
+  for(i in 1:5) {
+    # Splitting data into training and test sets for each fold
+    test_indices <- folds[[i]]
+    train_indices <- setdiff(1:nrow(data_encoded), test_indices)
+    train_data <- data_encoded[train_indices, ]
+    test_data <- data_encoded[test_indices, ]
+    test_matrix <- test_data
+    
+    # Create XGBoost matrices
+    xgb_train <- xgb.DMatrix(data = as.matrix(train_data[, -which(colnames(train_data) == "group_binary")]), 
+                             label = train_data[, "group_binary"])
+    xgb_test <- xgb.DMatrix(data = as.matrix(test_data[, -which(colnames(test_data) == "group_binary")]), 
+                            label = test_data[, "group_binary"])
+    
+    # Calculate the scale_pos_weight for current fold
+    pos_count <- sum(train_data[, "group_binary"] == 1)
+    neg_count <- sum(train_data[, "group_binary"] == 0)
+    scale_pos_weight <- neg_count / pos_count
+    
+    # Update XGBoost parameters
+    params <- list(objective = "binary:logistic",
+                   eval_metric = "auc",
+                   max_depth = 6,
+                   eta = 0.01,
+                   subsample = 0.5,
+                   colsample_bytree = 0.5,
+                   min_child_weight = 1,
+                   scale_pos_weight = scale_pos_weight)
+    
+    # Train XGBoost model
+    xgb_model <- xgb.train(params = params,
+                           data = xgb_train,
+                           nrounds = 150,
+                           watchlist = list(train = xgb_train, test = xgb_test),
+                           early_stopping_rounds = 20,
+                           print_every_n = 10)
+    
+    # Make predictions on test data
+    test_data <- data.frame(test_data)
+    test_data$pred <- predict(xgb_model, xgb_test)
+    env_dat_with_pred <<- rbind(env_dat_with_pred, test_data %>% select(CDiff_cp:DR_PsA_cp, group_binary, pred) %>% mutate(run = y, match = 'environmental',fold = i))
+    
+    # Calculate and store AUC for each fold
+    roc_obj <- roc(test_data$group_binary, test_data$pred)
+    auc_values <- c(auc_values, auc(roc_obj))
+    pr_curve <- pr.curve(scores.class0 = test_data$pred[test_data$group_binary == 1],
+                         scores.class1 = test_data$pred[test_data$group_binary == 0], 
+                         curve = TRUE)
+    auprc_values <- c(auprc_values, pr_curve$auc.integral)
+    
+    # Store feature importance for each fold
+    importance_list[[i]] <- xgb.importance(model = xgb_model)
+    
+    # Save the models
+    output_dir = paste0("results/model_results/",today,"/xgb/model_checkpoints/environmental_", y)
+    if (!dir.exists(output_dir)){
+      dir.create(output_dir)
+    } 
+    xgb.save(xgb_model, paste0(output_dir, "/fold_", i, ".model"))
+  }
+  
+  # Calculate average AUROC
+  avg_auc <- mean(auc_values)
+  std_auc <- sd(auc_values) / sqrt(length(auc_values))
+  t_value <- qt(0.975, df = length(auc_values) - 1)
+  margin_of_error <- t_value * std_auc
+  auc_lower_CI <- avg_auc - margin_of_error
+  auc_upper_CI <- avg_auc + margin_of_error
+  cat("Average AUC across folds:", avg_auc, "\n")
+  
+  # Calculate average AUPRC
+  avg_auprc <- mean(auprc_values)
+  std_auprc <- sd(auprc_values)
+  t_value <- qt(0.975, df = length(auprc_values) - 1)
+  margin_of_error <- t_value * std_auprc
+  auprc_lower_CI <- avg_auprc - margin_of_error
+  auprc_upper_CI <- avg_auprc + margin_of_error
+  cat("Average AUPRC across folds:", avg_auprc, "\n")
+  
+  # Aggregate and calculate average feature importance
+  all_importances <- bind_rows(importance_list)
+  avg_importance <- all_importances %>% 
+    group_by(Feature) %>% 
+    summarize(Gain = mean(Gain), Cover = mean(Cover), Frequency = mean(Frequency))
+  
+  # Calculating confusion matrix of model prediction
+  threshold <- 0.5
+  xgb_preds_binary <- ifelse(test_data$pred > threshold, 1, 0)
+  cm <- confusionMatrix(factor(xgb_preds_binary), 
+                        factor(test_data$group_binary),
+                        positive = '1')
+  
+  # For XGBoost metrics
+  metrics <- data.frame(
+    Target = y,
+    Match = 'environmental',
+    AUROC = avg_auc,
+    AUROC_lower_CI = auc_lower_CI,
+    AURPC_upper_CI = auc_upper_CI,
+    AUPRC = avg_auprc,
+    AUPRC_lower_CI = auprc_lower_CI,
+    AUPRC_upper_CI = auprc_upper_CI,
+    Sensitivity = cm$byClass["Sensitivity"],
+    Specificity = cm$byClass["Specificity"],
+    BalancedAccuracy = cm$byClass["Balanced Accuracy"],
+    PPV = cm$byClass["Pos Pred Value"],
+    NPV = cm$byClass["Neg Pred Value"],
+    Precision = cm$byClass["Precision"],
+    Recall = cm$byClass["Recall"],
+    F1 = cm$byClass["F1"]
+  )
+  
+  rownames(metrics) <- NULL
+  xgboost_metrics <<- rbind(xgboost_metrics, metrics)
+  
+  # Feature importance
+  avg_importance$Target <- y
+  avg_importance$match <-'environmental'
+  xgboost_feature_importance <<- rbind(xgboost_feature_importance, avg_importance)
+  
+}
+
+# Running environmental match
+for (rubric in matching_rubric){
+  dat.match <- cc_final %>% filter(match == rubric)
+  if (rubric == 'environmental'){
+    remaining_targets = setdiff(targets, env_dat_with_pred$run)
+    for (target in remaining_targets){
+      cat(paste0("Running environmental match models for target: ", target), "\n\n")
+      run_xgboost_environmental(target)
+      write.csv(env_dat_with_pred, paste0("results/model_results/",today,"/xgb/environmental_match_predictions.csv"), row.names = FALSE)
+      write.csv(xgboost_metrics, paste0("results/model_results/",today,"/xgb/xgboost_metrics.csv"), row.names = FALSE)
+    }
+  }
+}
+
+
 #### CLEAN UP ####
 
 # Remove global paths / variables

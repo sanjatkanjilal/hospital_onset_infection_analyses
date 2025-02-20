@@ -30,6 +30,10 @@
 ##### LIBRARIES ####
 library(tidyverse)
 library(conflicted)
+library(SHAPforxgboost)
+library(xgboost)
+library(dplyr)
+conflicts_prefer(dplyr::filter())
 conflicts_prefer(base::`%in%`)
 
 #### ENVIRONMENTAL VARIABLES ####
@@ -629,14 +633,14 @@ rm(cp, enterobacterales.cp, esbl.cp, vse.cp, vre.cp, mssa.cp,
 #### SHAP value plots ####
 all_runs = unique(cc_final$run)
 
-cp_colnames = cc_final %>% select(CDiff_cp:DR_PsA_cp) %>% colnames()
+cp_colnames = cc_final %>% select(elix_index_mortality, CDiff_cp:DR_PsA_cp) %>% colnames()
 
 for (run_name in all_runs){
   for (fold in c(1,2,3,4,5)){
     model = xgb.load(paste0('results/model_results/20250217/xgb/model_checkpoints/environmental_', run_name ,'/fold_',fold,'.model'))
     
     dat.run <- cc_final %>% filter(run == run_name & match == 'environmental')
-    dat.run <- dat.run %>% select(CDiff_cp:DR_PsA_cp)
+    dat.run <- dat.run %>% select(elix_index_mortality, CDiff_cp:DR_PsA_cp)
     dat.run <- dat.run %>% select(where(~n_distinct(.) > 1)) # Remove features with only 1 value among samples
     dat.run <- as.matrix(dat.run)
     

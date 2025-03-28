@@ -31,7 +31,7 @@
 #### SET ENVIRONMENT VARIABLES / IMPORT FUNCTIONS ####
 
 # Import the functions for the pipeline
-source("/PHShome/sk726/Scripts/ml-hc-class/prior_patient_infection/HO_infxn_functions.R")
+source("/PHShome/zw852/colonization-pressure_HAI/HO_infxn_functions.R")
 
 # Set working directory for imports
 mainDir <- "/data/tide/projects/ho_infxn_ml/"
@@ -73,7 +73,7 @@ readr::write_csv(adt.micro.raw, file = "clean_data/20250217/adt_micro_raw.csv")
 # org_group_3 for species-subtype specific categories (MRSA, MSSA, etc)
 micro  <- readr::read_csv(micro_filename)
 
-path_cat_table <- path_cat_hierarchy(micro, hierarchy = "org_group_3") 
+pathcat_table <- path_cat_hierarchy(micro, hierarchy = "org_group_3") 
 
 readr::write_csv(path_cat_table, file = "clean_data/20250217/path_cat_table.csv")
 

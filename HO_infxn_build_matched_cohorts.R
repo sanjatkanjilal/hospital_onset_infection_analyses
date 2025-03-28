@@ -160,7 +160,8 @@ variables_to_drop <- names(matched.final.models)[grepl("_0_60$", names(matched.f
 
 matched.final.models <- matched.final.models %>% 
   dplyr::select(match:group_index, group_binary, PatientID, DTS_in_month, DTS_in_year, duration,
-         time_to_infxn, matching_duration, age, sex, elix_index_mortality, any_surgery, admit_source_clean, 
+         time_to_infxn, matching_duration, age, sex, # starts_with('elix'), 
+         elix_index_mortality, any_surgery, admit_source_clean, 
          any_abx_0_60:other_abx_0_60, prior_C_diff:DR_PsA_cp) %>%
   dplyr::select(-all_of(variables_to_drop)) %>%
   dplyr::select(-matches("60_plus"))

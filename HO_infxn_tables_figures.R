@@ -43,7 +43,7 @@ mainDir <- "/data/tide/projects/ho_infxn_ml/"
 setwd(file.path(mainDir))
 
 #### IMPORT DATASETS ####
-cc_final <- readr::read_csv("clean_data/20250217/final_dataset_for_models_20250217.csv")
+cc_final <- readr::read_csv("clean_data/20250217/final_dataset_for_models_20250217_with_elix_features.csv")
 clr.results <- readr::read_csv("results/model_results/20250217/clogit_coefficients.csv")
 
 # Filter for result of colonization pressure analysis and set factor leve.s
@@ -63,6 +63,9 @@ clean.data.table <- cc_final %>%
 sample_size <- clean.data.table %>%
   dplyr::group_by(run, group) %>%
   dplyr::summarise(sample_size = dplyr::n())
+sample_size_pooled <- clean.data.table %>%
+  dplyr::group_by(group) %>%
+  dplyr::summarise(sample_size = dplyr::n())
 
 # Age
 age <- clean.data.table %>%
@@ -71,6 +74,13 @@ age <- clean.data.table %>%
             age_mean = mean(age),
             age_sd = sd(age),
             age_se = age_sd / sqrt(n))
+
+age_pooled <- clean.data.table %>%
+  dplyr::group_by(group) %>%
+  dplyr::summarise(n = dplyr::n(),
+                   age_mean = mean(age),
+                   age_sd = sd(age),
+                   age_se = age_sd / sqrt(n))
 
 # Elixhauser index
 elix <- clean.data.table %>%
@@ -82,6 +92,25 @@ elix <- clean.data.table %>%
             elix_median = median(elix_index_mortality),
             elix_q1 = quantile(elix_index_mortality, 0.25),
             elix_q3 = quantile(elix_index_mortality, 0.75))
+
+elix_pooled <- clean.data.table %>%
+  dplyr::group_by(group) %>%
+  dplyr::summarise(n = dplyr::n(),
+                   elix_mean = mean(elix_index_mortality),
+                   elix_sd = sd(elix_index_mortality),
+                   elix_se = elix_sd / sqrt(n),
+                   elix_median = median(elix_index_mortality),
+                   elix_q1 = quantile(elix_index_mortality, 0.25),
+                   elix_q3 = quantile(elix_index_mortality, 0.75))
+
+elix_indiv <- clean.data.table %>%
+  dplyr::group_by(run, group) %>%
+  dplyr::summarise(across(starts_with("elix"), ~ mean(. != 0, na.rm = TRUE) * 100))
+
+elix_indiv_pooled <- clean.data.table %>%
+  dplyr::group_by(group) %>%
+  dplyr::summarise(across(starts_with("elix"), ~ mean(. != 0, na.rm = TRUE) * 100))
+
 
 # Time to infection (cases only)
 time.to.infxn <- clean.data.table %>%
@@ -95,9 +124,31 @@ time.to.infxn <- clean.data.table %>%
                    time_to_infxn_q1 = quantile(time_to_infxn, 0.25),
                    time_to_infxn_q3 = quantile(time_to_infxn, 0.75))
 
+time.to.infxn_pooled <- clean.data.table %>%
+  dplyr::filter(group == "case") %>%
+  dplyr::group_by(group) %>%
+  dplyr::summarise(n = dplyr::n(),
+                   time_to_infxn_mean = mean(time_to_infxn),
+                   time_to_infxn_sd = sd(time_to_infxn),
+                   time_to_infxn_se = time_to_infxn_sd / sqrt(n),
+                   time_to_infxn_median = median(time_to_infxn),
+                   time_to_infxn_q1 = quantile(time_to_infxn, 0.25),
+                   time_to_infxn_q3 = quantile(time_to_infxn, 0.75))
+
+
 # Length of stay (LOS) in 1st room
 LOS <- clean.data.table %>%
   dplyr::group_by(run, group) %>%
+  dplyr::summarise(n = dplyr::n(),
+                   LOS_mean = mean(duration),
+                   LOS_sd = sd(duration),
+                   LOS_se = LOS_sd / sqrt(n),
+                   LOS_median = median(duration),
+                   LOS_q1 = quantile(duration, 0.25),
+                   LOS_q3 = quantile(duration, 0.75))
+
+LOS_pooled <- clean.data.table %>%
+  dplyr::group_by(group) %>%
   dplyr::summarise(n = dplyr::n(),
                    LOS_mean = mean(duration),
                    LOS_sd = sd(duration),
@@ -117,6 +168,16 @@ matching.duration <- clean.data.table %>%
             matching_duration_q1 = quantile(matching_duration, 0.25),
             matching_duration_q3 = quantile(matching_duration, 0.75))
 
+matching.duration_pooled <- clean.data.table %>%
+  dplyr::group_by(group) %>%
+  dplyr::summarise(n = dplyr::n(),
+                   matching_duration_mean = mean(matching_duration),
+                   matching_duration_sd = sd(matching_duration),
+                   matching_duration_se = matching_duration_sd / sqrt(n),
+                   matching_duration_median = median(matching_duration),
+                   matching_duration_q1 = quantile(matching_duration, 0.25),
+                   matching_duration_q3 = quantile(matching_duration, 0.75))
+
 # Categorical variables
 
 # Sex
@@ -130,12 +191,32 @@ sex <- clean.data.table %>%
   dplyr::mutate(female = (n / total)*100) %>%
   dplyr::filter(sex != "Male")
 
+sex_pooled <- clean.data.table %>%
+  dplyr::select(run, group, group_index, PatientID, sex) %>%
+  dplyr::distinct() %>%
+  dplyr::count(group, sex) %>%
+  dplyr::group_by(group) %>%
+  dplyr::mutate(total = sum(n)) %>%
+  dplyr::ungroup() %>%
+  dplyr::mutate(female = (n / total)*100) %>%
+  dplyr::filter(sex != "Male")
+
 # Prior surgery
 surgery <- clean.data.table %>%
   dplyr::select(run, group, group_index, PatientID, any_surgery) %>%
   dplyr::distinct() %>%
   dplyr::count(run, group, any_surgery) %>%
   dplyr::group_by(run, group) %>%
+  dplyr::mutate(total =sum(n)) %>%
+  dplyr::ungroup() %>%
+  dplyr::mutate(percent_prior_surgery = (n / total)*100) %>%
+  dplyr::filter(any_surgery != 0)
+
+surgery_pooled <- clean.data.table %>%
+  dplyr::select(run, group, group_index, PatientID, any_surgery) %>%
+  dplyr::distinct() %>%
+  dplyr::count(group, any_surgery) %>%
+  dplyr::group_by(group) %>%
   dplyr::mutate(total =sum(n)) %>%
   dplyr::ungroup() %>%
   dplyr::mutate(percent_prior_surgery = (n / total)*100) %>%
@@ -162,6 +243,28 @@ abx <- clean.data.table %>%
                                       "cephalosporin_0_60", "extended_spectrum_cephalosporin_0_60", "carbapenem_0_60",
                                       "glycopeptide_0_60", "fluoroquinolone_0_60", "macrolide_0_60", "lincosamide_0_60", 
                                       "tetracycline_0_60", "sulfonamide_0_60", "anti_anaerobe_0_60", "anti_Cdiff_0_60")))
+
+abx_pooled <- clean.data.table %>%
+  dplyr::select(run, group, group_index, PatientID, anti_anaerobe_0_60:tetracycline_0_60) %>%
+  dplyr::distinct() %>%
+  dplyr::rowwise() %>%
+  dplyr::mutate(total_courses_0_60 = sum(dplyr::c_across(contains("_0_60")), na.rm = TRUE)) %>%
+  dplyr::ungroup() %>%
+  tidyr::pivot_longer(anti_anaerobe_0_60:total_courses_0_60, names_to = "abx", values_to = "courses") %>%
+  dplyr::filter(courses > 0) %>%
+  dplyr::count(run, group, PatientID, abx) %>%
+  dplyr::group_by(group, abx) %>%
+  dplyr::mutate(total = sum(n)) %>%
+  dplyr::ungroup() %>%
+  dplyr::select(group, abx, total) %>%
+  dplyr::distinct() %>%
+  dplyr::left_join(sample_size_pooled) %>%
+  dplyr::mutate(courses_group = (total / (sample_size/100))) %>%
+  dplyr::mutate(abx = factor(abx, levels = c("total_courses_0_60", "penicillin_0_60", "anti_staph_beta_lactam_0_60", "extended_spectrum_penicillin_0_60", 
+                                      "cephalosporin_0_60", "extended_spectrum_cephalosporin_0_60", "carbapenem_0_60",
+                                      "glycopeptide_0_60", "fluoroquinolone_0_60", "macrolide_0_60", "lincosamide_0_60", 
+                                      "tetracycline_0_60", "sulfonamide_0_60", "anti_anaerobe_0_60", "anti_Cdiff_0_60")))
+
 
 # Combine into a single table
 age.temp <- age %>% 
@@ -635,6 +738,8 @@ all_runs = unique(cc_final$run)
 
 cp_colnames = cc_final %>% select(elix_index_mortality, CDiff_cp:DR_PsA_cp) %>% colnames()
 
+shap_value_matrix = data.frame()
+elix_shap_matrix = data.frame()
 for (run_name in all_runs){
   for (fold in c(1,2,3,4,5)){
     model = xgb.load(paste0('results/model_results/20250217/xgb/model_checkpoints/environmental_', run_name ,'/fold_',fold,'.model'))
@@ -653,7 +758,7 @@ for (run_name in all_runs){
     shap_long <- shap_long[order(shap_long$ID, factor(shap_long$variable, levels = cp_colnames)),]
     
     if (fold == 1) {
-      shap_list = copy(shap_long)
+      shap_list <- shap_long
     }else{
       shap_list[,3:6] = shap_list[,3:6] + shap_long[,3:6,]
     }
@@ -661,7 +766,32 @@ for (run_name in all_runs){
   }
   
   # Print the result
-  shap_list[,3:6] = shap_list[,3:6] / 5
+  # shap_list[,3:6] = shap_list[,3:6] / 5
+  
+  elix_shap = shap_long %>% filter(variable == 'elix_index_mortality')
+  elix_shap$variable = run_name
+  if (nrow(elix_shap_matrix) == 0){
+    elix_shap_matrix = elix_shap
+  }else{
+    elix_shap_matrix <- rbind(elix_shap_matrix, elix_shap)
+  }
+  
+  shap_summary <- shap_long %>%
+    group_by(variable) %>%
+    summarize(mean_abs_value = mean(abs(value), na.rm = TRUE),
+              se = sd(abs(value), na.rm = TRUE) / sqrt(sum(!is.na(value))))
+  
+  shap_summary <- shap_summary %>%
+    mutate(mean_se = paste0(round(mean_abs_value, 4), " ± ", round(se, 4))) %>%
+    select(variable, mean_se)
+  
+  if (nrow(shap_value_matrix) == 0){
+    shap_value_matrix = shap_summary
+    colnames(shap_value_matrix)[ncol(shap_value_matrix)] <- run_name
+  }else{
+    shap_value_matrix <- merge(shap_value_matrix, shap_summary, by=c('variable'))
+    colnames(shap_value_matrix)[ncol(shap_value_matrix)] <- run_name
+  }
   
   plot <- shap.plot.summary(shap_long)
   
@@ -671,6 +801,17 @@ for (run_name in all_runs){
          height = 6)
   
 }
+
+elix_shap_matrix <- elix_shap_matrix %>% filter(variable %in% all_runs)
+# elix_shap_matrix <- elix_shap_matrix[order(elix_shap_matrix$ID, factor(elix_shap_matrix$variable)),]
+elix_shap_matrix$variable = factor(elix_shap_matrix$variable)
+elix_plot <- shap.plot.summary(elix_shap_matrix)
+
+write.csv(x = shap_value_matrix, file = 'results/model_results/20250217/xgb/shap_plots/shap_values.csv',row.names = FALSE)
+ggsave(filename = paste0('results/model_results/20250217/xgb/shap_plots/elixhauser_shap_summary.pdf'), 
+       plot = elix_plot, 
+       width = 8, 
+       height = 6)
 
 #### GLOBAL CLEAN UP ####
 rm(mainDir, cc_final, clr.results)

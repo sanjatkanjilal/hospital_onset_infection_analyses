@@ -1089,18 +1089,21 @@ adt_micro_initial_prep <- function(room_dat,
   print("Drop old micro data")
   tic()
   adt.micro.raw <- drop_old_micro(adt.micro.raw)
+  print(nrow(adt.micro.raw))
   toc()
   
   # Remove hospitalization episodes where the patient received inpatient antibiotics prior to their stay in the room based on when their abx course finished
   print("Remove potential cases where the patient received concomitant IP/OP antibiotics")
   tic()
   adt.micro.raw <- remove_treated_patients(adt.micro.raw, abx.courses, day_threshold)
+  print(nrow(adt.micro.raw))
   toc()
   
   # Remove hospitalization episodes where patients had another IP encounter >2d in duration in the previous 90 days
   print("Drop potential cases where the patient had another hospital encounter in the previous 90 days")
   tic()
   adt.micro.raw <- drop_prev_enc(adt.micro.raw, enc_clean)
+  print(nrow(adt.micro.raw))
   toc()
   
   # Add feature for matching cases (time to infxn) to control (LOS in room)

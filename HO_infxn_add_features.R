@@ -43,25 +43,31 @@
 #### SET ENVIRONMENT VARIABLES / IMPORT FUNCTIONS ####
 
 # Import the functions for the pipeline
-source("/PHShome/sk726/Scripts/ml-hc-class/prior_patient_infection/HO_infxn_functions.R")
+# source("/PHShome/sk726/Scripts/ml-hc-class/prior_patient_infection/HO_infxn_functions.R")
+source("~/colonization-pressure_HAI/HO_infxn_functions.R")
+# conflicted::conflicts_prefer(tidyr::replace_na)
+# conflicted::conflicts_prefer(dplyr::mutate)
+# conflicted::conflicts_prefer(dplyr::select)
+# conflicted::conflicts_prefer(dplyr::distinct)
+# conflicted::conflicts_prefer(dplyr::if_else)
 
 # Set working directory for imports
 mainDir <- "/data/tide/projects/ho_infxn_ml/"
 setwd(file.path(mainDir))
 
 # Global paths
-unmatched_cohort_no_features <- "clean_data/20250217/unmatched_case_controls_no_features_org_group_3.csv"
-adt_micro_raw <- "clean_data/20250217/adt_micro_raw.csv"
-dems_filename <- "input_data/20250217/MGB_demographics_20240715.csv"
-abx_courses <- "clean_data/20250217/abx_courses.csv"
-elix_filename <-"input_data/20250217/MGB_elixhauser_20240715_updated.csv"
-cpt_filename <- "input_data/20250217/MGB_procedures_20240715.csv"
-admt_filename <- "clean_data/20250217/admt_clean.csv"
+unmatched_cohort_no_features <- "clean_data/20250411/unmatched_case_controls_no_features_org_group_3.csv"
+adt_micro_raw <- "clean_data/20250411/adt_micro_raw.csv"
+dems_filename <- "input_data/20250411/MGB_demographics_20240715.csv"
+abx_courses <- "clean_data/20250411/abx_courses.csv"
+elix_filename <-"input_data/20250411/MGB_elixhauser_20240715_updated.csv"
+cpt_filename <- "input_data/20250411/MGB_procedures_20240715.csv"
+admt_filename <- "clean_data/20250411/admt_clean.csv"
 location_map_filename <- "mappings/department_mapping.csv"
-enc_filename <- "clean_data/20250217/enc_clean.csv"
-ADT_filename <- "input_data/20250217/MGB_ADT_20140131-20240713.csv"
-micro_filename <- "input_data/20250217/micro.ground_truth_20150525-20240701.csv"
-path_cat_table_filename <- "clean_data/20250217/path_cat_table.csv"
+enc_filename <- "clean_data/20250411/enc_clean.csv"
+ADT_filename <- "input_data/20250411/MGB_ADT_20140131-20240713.csv"
+micro_filename <- "input_data/20250411/micro.ground_truth_20150525-20250131.csv"
+path_cat_table_filename <- "clean_data/20250411/path_cat_table.csv"
 
 # Set pathogen hierarchy
 pathogen_hierarchy <- "org_group_3"
@@ -101,7 +107,7 @@ cpt <- readr::read_csv(cpt_filename) %>%
 cpt_features <- add_cpt(adt.micro.raw, cpt) 
 
 # Admission disposition
-admt_mapped <- readr:read_csv(admt_filename)
+admt_mapped <- readr::read_csv(admt_filename)
 
 admt_features <- add_admit.source(adt.micro.raw, admt_mapped) 
 
@@ -112,7 +118,7 @@ micro <- readr::read_csv(micro_filename)
 prior_occupant_features <- add_prior_pathogens(room_dat, micro, pathogen_hierarchy, adt.micro.raw) 
 
 # Colonization pressure (sum of log transform of days since ward patients had pathogen) # ~14 hour run time
-location_map <- readr::read_csv(paste0("mappings/", location_map_filename)) 
+location_map <- readr::read_csv(paste0(location_map_filename)) 
 
 cp_features.prelim <- calculate_and_add_cp_scores_parallel(adt.micro.raw, micro, room_dat, location_map) 
 
@@ -122,13 +128,13 @@ cp_features <- cp_features.prelim %>%
   distinct()
 
 ####  SAVE FEATURE DATASETS ####
-readr::write_csv(dem_features, file = paste0("clean_data/20250217/dems_", pathogen_hierarchy, ".csv"))
-readr::write_csv(abx_features, file = paste0("clean_data/20250217/abx_", pathogen_hierarchy, ".csv"))
-readr::write_csv(elix_features, file = paste0("clean_data/20250217/elix_", pathogen_hierarchy, ".csv"))
-readr::write_csv(cpt_features, file = paste0("clean_data/20250217/cpt_", pathogen_hierarchy, ".csv"))
-readr::write_csv(admt_features, file = paste0("clean_data/20250217/admt_", pathogen_hierarchy, ".csv"))
-readr::write_csv(prior_occupant_features, file = paste0("clean_data/20250217/prior_occupant_", pathogen_hierarchy, ".csv"))
-readr::write_csv(cp_features, file = paste0("clean_data/20250217/col_pressure_", pathogen_hierarchy, ".csv"))
+readr::write_csv(dem_features, file = paste0("clean_data/20250411/dems_", pathogen_hierarchy, ".csv"))
+readr::write_csv(abx_features, file = paste0("clean_data/20250411/abx_", pathogen_hierarchy, ".csv"))
+readr::write_csv(elix_features, file = paste0("clean_data/20250411/elix_", pathogen_hierarchy, ".csv"))
+readr::write_csv(cpt_features, file = paste0("clean_data/20250411/cpt_", pathogen_hierarchy, ".csv"))
+readr::write_csv(admt_features, file = paste0("clean_data/20250411/admt_", pathogen_hierarchy, ".csv"))
+readr::write_csv(prior_occupant_features, file = paste0("clean_data/20250411/prior_occupant_", pathogen_hierarchy, ".csv"))
+readr::write_csv(cp_features, file = paste0("clean_data/20250411/col_pressure_", pathogen_hierarchy, ".csv"))
 
 #### CREATE FULLY FEATURIZED COHORT ####
 
@@ -148,7 +154,7 @@ path_cat_table <- readr::read_csv(path_cat_table_filename)
 
 # Select organisms with n>300 cases in unmatched cohorts
 path_cat_table_matching <- pathogen_selection(cc.unmatched, path_cat_table)
-readr::write_csv(path_cat_table_matching, file = paste0("clean_data/20250217/path_cat_table_matching.csv"))
+readr::write_csv(path_cat_table_matching, file = paste0("clean_data/20250411/path_cat_table_matching.csv"))
 
 unmatched_features <- do.call(dplyr::bind_rows, 
                               lapply(levels(factor(path_cat_table_matching$pathogen_category)), function(y) 
@@ -192,7 +198,7 @@ unmatched_features <- unmatched_features %>%
   dplyr::distinct()
 
 #### SAVE UNMATCHED COHORTS WITH FEATURES ADDED ####
-readr::write_csv(unmatched_features, file = paste0("clean_data/20250217/unmatched_case_controls_features_", pathogen_hierarchy, ".csv"))
+readr::write_csv(unmatched_features, file = paste0("clean_data/20250411/unmatched_case_controls_features_", pathogen_hierarchy, ".csv"))
 
 #### CLEAN UP ####
 

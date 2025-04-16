@@ -33,7 +33,7 @@
 
 #### LIBRARIES ####
 library(data.table)
-library(tidytable)
+# library(tidytable)
 library(tidyverse)
 library(reshape2)
 library(MatchIt)
@@ -169,7 +169,7 @@ process_ip_abx_features <- function(abx_prelim)
   abx.ip.prelim <- abx.ip.prelim[order(patientID, drug_class, taken_DT)]
   abx.ip.prelim[, id := seq_len(.N), by = c("patientID", "taken_DT", "drug_class")]
   abx.ip.prelim <- abx.ip.prelim[id == 1]
-  abx.ip <- data.table::unique(abx.ip.prelim[, .(patientID, taken_DT, antibiotic, drug_class)])
+  abx.ip <- unique(abx.ip.prelim[, .(patientID, taken_DT, antibiotic, drug_class)])
   abx.ip <- as.data.frame(abx.ip)
   toc()
   
@@ -223,7 +223,7 @@ calculate_op_abx_durations <- function(abx_prelim)
   abx_op_duration_raw <- abx_op_duration_raw[order(patientID, drug_class, order_DT)]
   abx_op_duration_raw[, id := seq_len(.N), by = c("patientID", "order_DT", "drug_class")]
   abx_op_duration_raw <- abx_op_duration_raw[id == 1]  
-  abx_op_duration_raw <- data.table::unique(abx_op_duration_raw[, .(patientID, order_DT, antibiotic, drug_class, order_freq, order_quantity)])
+  abx_op_duration_raw <- unique(abx_op_duration_raw[, .(patientID, order_DT, antibiotic, drug_class, order_freq, order_quantity)])
   
   abx_op_duration_raw <- abx_op_duration_raw %>% 
     dplyr::mutate(numeric_frequency_per_day = dplyr::case_when(
@@ -404,6 +404,9 @@ path_cat_hierarchy <- function(micro, hierarchy)
 # Ennumerate rooms and for ones that have the same DTS_in, sort and choose the latest one only
 first_eligible_rooms <- function(room_dat)
   {
+  
+  room_dat$dept_room <- paste(room_dat$DepartmentDSC, room_dat$RoomID, sep = " ")
+  
   room_dat.eligible.prelim <- room_dat %>%
     # head(10000) %>%
     dplyr::filter(!grepl("emerg|periop|unspecified|home ", DepartmentDSC, ignore.case = T, perl = T)) %>%
@@ -744,11 +747,11 @@ add_abx <- function(abx.courses, adt.micro.raw)
     dplyr::mutate(val = 1) %>% 
     dplyr::distinct() %>% 
     dplyr::group_by(PatientID) %>% 
-    dplyr::pivot_wider(names_from = c(drug_class, duration_binary, interval), names_sep = "_", values_from = val) %>% 
+    tidyr::pivot_wider(names_from = c(drug_class, duration_binary, interval), names_sep = "_", values_from = val) %>% 
     dplyr::ungroup() %>%
     dplyr::select(-c(DTS_in, end_DT, abx_duration_days, diff_days)) %>%
     dplyr::distinct() %>%
-    dplyr::mutate_if(is.numeric, list(~ replace_na(., 0)))
+    dplyr::mutate_if(is.numeric, list(~ tidyr::replace_na(., 0)))
   
   return(abx_features.prelim)
   }
@@ -765,7 +768,7 @@ final_abx_clean <- function(abx_features.prelim, id_vars)
   abx_features <- reshape2::dcast(abx_features.melt, PatientID + room_stay_id ~ variable, value.var = "value", fun.aggregate = sum)
   
   abx_features <- abx_features %>%
-    dplyr::mutate_if(is.numeric, list(~ replace_na(., 0)))
+    dplyr::mutate_if(is.numeric, list(~ tidyr::replace_na(., 0)))
   
   abx_of_interest <- c("penicillin_0_60", "extended_spectrum_penicillin_0_60", "cephalosporin_0_60", 
                        "extended_spectrum_cephalosporin_0_60", "carbapenem_0_60", "anti_staph_beta_lactam_0_60", 
@@ -810,7 +813,7 @@ add_cpt <- function(adt.micro.raw, cpt)
     dplyr::select(PatientID, hospitalization_id, surgery_past_90) %>% 
     dplyr::distinct() %>%
     dplyr::mutate(val = 1) %>% 
-    dplyr::pivot_wider(names_from = surgery_past_90, values_from = val) %>%
+    tidyr::pivot_wider(names_from = surgery_past_90, values_from = val) %>%
     dplyr::mutate_if(is.numeric, list(~ replace_na(., 0))) %>%
     dplyr::arrange(hospitalization_id, PatientID) %>%
     dplyr::mutate(any_surgery = 1)
@@ -854,6 +857,10 @@ add_admit.source <- function(adt.micro.raw, admt_mapped)
 add_prior_pathogens <- function(room_dat, micro, pathogen_hierarchy, adt.micro.raw) 
   {
   # Prep total room dataset
+  
+  room_dat$dept_room <- paste(room_dat$DepartmentDSC, room_dat$RoomID, sep = " ")
+  room_dat$PatientEncounterID <- as.character(room_dat$PatientEncounterID)
+  
   room_dat.simple <- room_dat %>%
     dplyr::select(PatientID, PatientEncounterID, dept_room, DTS_in, DTS_out, duration) %>%
     dplyr::distinct() 
@@ -958,9 +965,9 @@ calculate_CP_score <- function(date, location_specific, room_dat, numerator_cate
     colonization_pressure <- filtered_data %>%
       dplyr::group_by(PatientID, org_group_3) %>%
       dplyr::filter(coll_datetime_UTC == max(coll_datetime_UTC)) %>% # Retain only the most recent positive sample
-      summarize(days_since_last_positive = as.numeric(date - coll_datetime_UTC), .groups = "drop") %>%
+      dplyr::summarize(days_since_last_positive = as.numeric(date - coll_datetime_UTC), .groups = "drop") %>%
       dplyr::mutate(score = exp(-lambda * days_since_last_positive)) %>% # Exponential decay
-      pull(score) %>% 
+      dplyr::pull(score) %>% 
       sum(na.rm = TRUE)
   }
   
@@ -1057,19 +1064,19 @@ adt_micro_initial_prep <- function(room_dat,
   # Group hospital room stays into episodes 
   print("Group hospital room stays into episodes")
   tic()
-  room_dat.eligible <- first_eligible_rooms(room_dat)
+  room_dat.eligible <<- first_eligible_rooms(room_dat)
   toc()
   
   # Filter micro data for patients in ADT dataset
   print("Filter micro data for patients in ADT dataset")
   tic()
-  micro.eligible <- micro_prep(micro.dedup, room_dat.eligible)
+  micro.eligible <<- micro_prep(micro.dedup, room_dat.eligible)
   toc()
   
   # Ensure room data begins after the start of the micro data
   print("Ensure room data begins after the start of the micro data")
   tic()
-  room_dat.eligible.trimmed <- room_dat_eligible_trimmed(room_dat.eligible, micro.eligible)
+  room_dat.eligible.trimmed <<- room_dat_eligible_trimmed(room_dat.eligible, micro.eligible)
   toc()
   
   # Add prepped micro data to prepped ADT data

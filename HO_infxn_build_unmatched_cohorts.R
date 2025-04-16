@@ -32,18 +32,20 @@
 
 # Import the functions for the pipeline
 source("/PHShome/zw852/colonization-pressure_HAI/HO_infxn_functions.R")
+conflicted::conflicts_prefer(dplyr::n)
 
 # Set working directory for imports
 mainDir <- "/data/tide/projects/ho_infxn_ml/"
 setwd(file.path(mainDir))
 
 # Global paths
-ADT_filename <- "input_data/20250217/MGB_ADT_20140131-20240713.csv"
-micro_dedup_filename <- "clean_data/20250217/micro_dedup.csv"
-abx_courses_filename <- "clean_data/20250217/abx_courses.csv"
-enc_clean_filename <- "clean_data/20250217/enc_clean.csv"
-micro_filename <- "input_data/20250217/micro.ground_truth_20150525-20250131.csv"
-abx_prelim_filename <- "clean_data/20250217/abx_prelim_clean.csv"
+# ADT_filename <- "input_data/20250411/MGB_ADT_20140131-20240713.csv"
+ADT_filename <- "clean_data/20250411/ADT_clean.csv"
+micro_dedup_filename <- "clean_data/20250411/micro_dedup.csv"
+abx_courses_filename <- "clean_data/20250411/abx_courses.csv"
+enc_clean_filename <- "clean_data/20250411/enc_clean.csv"
+micro_filename <- "input_data/20250411/micro.ground_truth_20150525-20250131.csv"
+abx_prelim_filename <- "clean_data/20250411/abx_prelim_clean.csv"
 
 # Set pathogen hierarchy
 pathogen_hierarchy <- "org_group_3"
@@ -63,7 +65,7 @@ adt.micro.raw <- adt_micro_initial_prep(room_dat = room_dat,
                                         enc_clean = enc_clean)
 
 #### SAVE PRELIMINARY ADT / MICRO JOINED DATASET
-readr::write_csv(adt.micro.raw, file = "clean_data/20250217/adt_micro_raw.csv")
+readr::write_csv(adt.micro.raw, file = "clean_data/20250411/adt_micro_raw.csv")
 
 #### BUILD UNMATCHED CASE / CONTROL DATASETS ####
 
@@ -73,9 +75,9 @@ readr::write_csv(adt.micro.raw, file = "clean_data/20250217/adt_micro_raw.csv")
 # org_group_3 for species-subtype specific categories (MRSA, MSSA, etc)
 micro  <- readr::read_csv(micro_filename)
 
-pathcat_table <- path_cat_hierarchy(micro, hierarchy = "org_group_3") 
+path_cat_table <- path_cat_hierarchy(micro, hierarchy = "org_group_3") 
 
-readr::write_csv(path_cat_table, file = "clean_data/20250217/path_cat_table.csv")
+readr::write_csv(path_cat_table, file = "clean_data/20250411/path_cat_table.csv")
 
 # Identify cases / controls for each organism in the table above
 abx_prelim <- readr::read_csv(abx_prelim_filename)
@@ -88,9 +90,9 @@ cc.unmatched <- do.call(bind_rows,
                           
                           print(paste("Running for", y))
                           
-                          pathogen_hierarchy <- unique(pathcat_table$pathogen_hierarchy)
+                          pathogen_hierarchy <- unique(path_cat_table$pathogen_hierarchy)
                           
-                          # Select cases and conatrols 
+                          # Select cases and controls 
                           unmatched_cc <- generate_unmatched_data(
                             pathogen_hierarchy = pathogen_hierarchy,
                             pathogen_category = y,
@@ -109,11 +111,11 @@ cc.unmatched <- do.call(bind_rows,
                         }))
 
 cc.unmatched <- cc.unmatched %>%
-  dplyr::arrange(hospitalization_id, room_stay_id) %>%
-  dplyr::spread(key = run, value = group)
+  arrange(hospitalization_id, room_stay_id) %>%
+  spread(key = run, value = group)
 
 #### SAVE UNMATCHED COHORT DATASET ####
-readr::write_csv(cc.unmatched, file = paste0("clean_data/20250217/unmatched_case_controls_no_features_", pathogen_hierarchy, ".csv"))
+readr::write_csv(cc.unmatched, file = paste0("clean_data/20250411/unmatched_case_controls_no_features_", pathogen_hierarchy, ".csv"))
 
 #### CLEAN UP ####
 

@@ -41,21 +41,22 @@
 #### SET ENVIRONMENT VARIABLES ####
 
 # Import the functions for the pipeline
-source("/PHShome/sk726/Scripts/ml-hc-class/prior_patient_infection/HO_infxn_functions.R")
+source("/PHShome/zw852/colonization-pressure_HAI/HO_infxn_functions.R")
 
 # Set working directory for imports
 mainDir <- "/data/tide/projects/ho_infxn_ml/"
 setwd(file.path(mainDir))
 
 # Global paths
-path_cat_table_filename <- "clean_data/20250217/path_cat_table_matching.csv"
-unmatched_features_filename <- "clean_data/20250217/unmatched_case_controls_features_org_group_3.csv"
+path_cat_table_filename <- "clean_data/20250411/path_cat_table_matching.csv"
+unmatched_features_filename <- "clean_data/20250411/unmatched_case_controls_features_org_group_3.csv"
 
 #### BUILD MATCHED DATASETS ####
 
 path_cat_table_matching <- readr::read_csv(path_cat_table_filename)
 unmatched_features <- readr::read_csv(unmatched_features_filename)
 
+unmatched_features <- subset(unmatched_features, select = -c(prior_NA))
 # Import datasets as needed
 # unmatched_features <- read_csv(file = paste0("clean_data/",  today, "/unmatched_case_controls_features_", pathogen_hierarchy, ".csv"))
 
@@ -121,7 +122,7 @@ matched.final <- dplyr::bind_rows(environment.matched, patient.matched) %>%
   dplyr::distinct()
 
 # Save matched patient-level dataset + features
-readr::write_csv(matched.final, file = paste0("clean_data/20250217/final_cohort_org_group_3.csv"))
+readr::write_csv(matched.final, file = paste0("clean_data/20250411/final_cohort_org_group_3.csv"))
 
 #### FINAL DATASET CLEAN / PREP FOR MODELS ####
 
@@ -178,7 +179,7 @@ matched.final.models <- matched.final.models %>%
 colSums(is.na(matched.final.models))
 
 # Save file
-readr::write_csv(matched.final.models, file = paste0("clean_data/20250217/final_dataset_for_models_20250217.csv"))
+readr::write_csv(matched.final.models, file = paste0("clean_data/20250411/final_dataset_for_models_20250411.csv"))
 
 #### CLEAN UP ####
 

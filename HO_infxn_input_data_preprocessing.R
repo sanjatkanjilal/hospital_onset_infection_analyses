@@ -28,9 +28,20 @@
 #####################################################################################################
 
 #### SET ENVIRONMENT VARIABLES / IMPORT FUNCTIONS ####
+conflicted::conflicts_prefer(dplyr::row_number)
+conflicts_prefer(dplyr::filter())
+conflicts_prefer(dplyr::lag())
+conflicts_prefer(lubridate::month)
+conflicts_prefer(lubridate::year)
+conflicts_prefer(lubridate::week)
+conflicts_prefer(lubridate::quarter)
+conflicts_prefer(dplyr::first)
+conflicts_prefer(reshape2::melt)
+conflicts_prefer(reshape2::dcast)
+conflicts_prefer(data.table::shift)
 
 # Set working directory for imports
-mainDir <- "/data/tide/projects/ho_infxn_ml/input_data/20250217/"
+mainDir <- "/data/tide/projects/ho_infxn_ml/input_data/20250411/"
 setwd(file.path(mainDir))
 
 # Global paths
@@ -42,7 +53,8 @@ admt_filename <- "MGB_IP_ED_encounters_20150430-20240715.csv"
 enc_filename <- "MGB_encounters_20241105.csv"
 
 # Import the functions for the pipeline
-source("/PHShome/sk726/Scripts/ml-hc-class/prior_patient_infection/HO_infxn_functions.R")
+# source("/PHShome/sk726/Scripts/ml-hc-class/prior_patient_infection/HO_infxn_functions.R")
+source("~/colonization-pressure_HAI/HO_infxn_functions.R")
 
 #### PROCESS INPUT DATA ####
 
@@ -98,7 +110,7 @@ admt_clean <- admt.mapped(admt)
 
 #### SAVE CLEANED INPUT DATASETS FOR ADT / MICRO JOIN ####
 # Set working directory for exports
-mainDir <- "/data/tide/projects/ho_infxn_ml/clean_data/20250217/"
+mainDir <- "/data/tide/projects/ho_infxn_ml/clean_data/20250411/"
 setwd(file.path(mainDir))
 
 readr::write_csv(room_dat, file = "ADT_clean.csv")

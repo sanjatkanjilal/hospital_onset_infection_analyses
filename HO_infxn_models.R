@@ -42,7 +42,7 @@ mainDir <- "/data/tide/projects/ho_infxn_ml/"
 setwd(file.path(mainDir))
 
 #### IMPORT DATASETS ####
-cc_final <- readr::read_csv("clean_data/20250217/final_dataset_for_models_20250217.csv")
+cc_final <- readr::read_csv("clean_data/20250411/final_dataset_for_models_20250411.csv")
 
 #### SET UP MODELS ####
 
@@ -153,7 +153,7 @@ clr.final <- clr %>%
          upper_CI_raw = upper_CI, SE_coef_raw = SE_coef, pval_raw = pval)
 
 # Save file
-readr::write_csv(clr.final, file = paste0("results/model_results/20250217/clogit_coefficients.csv"))
+readr::write_csv(clr.final, file = paste0("results/model_results/20250411/clogit_coefficients.csv"))
 
 #### XGBOOST MODELS ####
 

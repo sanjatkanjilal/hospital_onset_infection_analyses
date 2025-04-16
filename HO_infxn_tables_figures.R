@@ -244,6 +244,25 @@ abx <- clean.data.table %>%
                                       "glycopeptide_0_60", "fluoroquinolone_0_60", "macrolide_0_60", "lincosamide_0_60", 
                                       "tetracycline_0_60", "sulfonamide_0_60", "anti_anaerobe_0_60", "anti_Cdiff_0_60")))
 
+abx_se <- clean.data.table %>%
+  dplyr::select(run, group, group_index, PatientID, anti_anaerobe_0_60:tetracycline_0_60) %>%
+  dplyr::distinct() %>%
+  dplyr::rowwise() %>%
+  dplyr::mutate(total_courses_0_60 = sum(dplyr::c_across(contains("_0_60")), na.rm = TRUE)) %>%
+  dplyr::ungroup() %>%
+  tidyr::pivot_longer(anti_anaerobe_0_60:total_courses_0_60, names_to = "abx", values_to = "courses") %>%
+  dplyr::group_by(run, group, abx) %>%
+  dplyr::summarize(
+    se_courses = sd(courses, na.rm = TRUE) / sqrt(dplyr::n()),
+    .groups = "drop"
+  ) %>% 
+  dplyr::mutate(se_courses = se_courses * 100)
+
+abx <- dplyr::left_join(abx,
+                        abx_se,
+                        by = c('run','group','abx'))
+
+
 abx_pooled <- clean.data.table %>%
   dplyr::select(run, group, group_index, PatientID, anti_anaerobe_0_60:tetracycline_0_60) %>%
   dplyr::distinct() %>%
@@ -265,6 +284,23 @@ abx_pooled <- clean.data.table %>%
                                       "glycopeptide_0_60", "fluoroquinolone_0_60", "macrolide_0_60", "lincosamide_0_60", 
                                       "tetracycline_0_60", "sulfonamide_0_60", "anti_anaerobe_0_60", "anti_Cdiff_0_60")))
 
+abx_pooled_se <- clean.data.table %>%
+  dplyr::select(run, group, group_index, PatientID, anti_anaerobe_0_60:tetracycline_0_60) %>%
+  dplyr::distinct() %>%
+  dplyr::rowwise() %>%
+  dplyr::mutate(total_courses_0_60 = sum(dplyr::c_across(contains("_0_60")), na.rm = TRUE)) %>%
+  dplyr::ungroup() %>%
+  tidyr::pivot_longer(anti_anaerobe_0_60:total_courses_0_60, names_to = "abx", values_to = "courses") %>%
+  dplyr::group_by(group, abx) %>%
+  dplyr::summarize(
+    se_courses = sd(courses, na.rm = TRUE) / sqrt(dplyr::n()),
+    .groups = "drop"
+  ) %>% 
+  dplyr::mutate(se_courses = se_courses * 100)
+
+abx_pooled <- dplyr::left_join(abx_pooled,
+                               abx_se,
+                               by = c('group','abx'))
 
 # Combine into a single table
 age.temp <- age %>% 

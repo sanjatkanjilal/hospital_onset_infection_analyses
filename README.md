@@ -13,7 +13,7 @@ Prior studies have shown a direct association between CP and HAI(Bonten 1998,Aja
 ## File Description
 
 ### Scripts
-1. HO_infxn_functions.R
+1. **HO_infxn_functions.R**
 
     **Description:** Functions for pre-processing and cohort building for colonization pressure / hospital-onset infection analysis
     
@@ -23,9 +23,9 @@ Prior studies have shown a direct association between CP and HAI(Bonten 1998,Aja
     **Output Files**
     - None
 
-2. HO_infxn_C_Diff_micro_query.R
+2. **HO_infxn_C_Diff_micro_query.R**
 
-    **Description:** Script to pull any patients who had a C.difficile test performed
+   **Description:** Script to pull any patients who had a C.difficile test performed
 
     **Input Files**
     - `edw_cdiff.csv`
@@ -34,7 +34,7 @@ Prior studies have shown a direct association between CP and HAI(Bonten 1998,Aja
     **Output Files**
     - `Cdiff.csv`
 
-3. HO_infxn_micro_prep.R
+3. **HO_infxn_micro_prep.R**
 
     **Description:** Script to process micro data for HO-infection study
     
@@ -45,7 +45,7 @@ Prior studies have shown a direct association between CP and HAI(Bonten 1998,Aja
     **Output Files**
     - `micro_ground_truth.csv`
 
-4. HO_infxn_input_data_preprocessing.R
+4. **HO_infxn_input_data_preprocessing.R**
 
     **Description:** Input data pre-processing for colonization pressure / hospital-onset infection analysis
 
@@ -68,7 +68,7 @@ Prior studies have shown a direct association between CP and HAI(Bonten 1998,Aja
     - `enc_clean.csv`
     - `admt_clean.csv`
 
-5. HO_infxn_build_unmatched_cohorts.R
+5. **HO_infxn_build_unmatched_cohorts.R**
 
     **Description:** Build unmatched cohorts for colonization pressure / hospital-onset infection analysis
 
@@ -88,7 +88,7 @@ Prior studies have shown a direct association between CP and HAI(Bonten 1998,Aja
     - `path_cat_table.csv`
     - `unmatched_case_controls_no_features.csv`
 
-6. HO_infxn_add_features.R
+6. **HO_infxn_add_features.R**
 
     **Description:** Add features to cohorts in colonization pressure / hospital-onset infection analysis
 
@@ -121,7 +121,7 @@ Prior studies have shown a direct association between CP and HAI(Bonten 1998,Aja
     - `unmatched_case_controls_features.csv`
 
 
-7. HO_infxn_build_matched_cohorts.R
+7. **HO_infxn_build_matched_cohorts.R**
 
     **Description:** Matches cases to controls for colonization pressure / hospital-onset infection analysis
 
@@ -136,7 +136,7 @@ Prior studies have shown a direct association between CP and HAI(Bonten 1998,Aja
     - `final_cohort.csv`
     - `final_dataset_for_models.csv`
 
-8. HO_infxn_models.R
+8. **HO_infxn_models.R**
 
     **Description:** Models for colonization pressure / hospital-onset infection analysis
 
@@ -147,7 +147,7 @@ Prior studies have shown a direct association between CP and HAI(Bonten 1998,Aja
     - `clogit_coefficients.csv`
     - `xgboost_feature_importance.csv`
 
-9. HO_infxn_tables_figures.R
+9. **HO_infxn_tables_figures.R**
 
     **Description:** Data visualizations for colonization pressure / hospital-onset infection analysis
 
@@ -159,7 +159,7 @@ Prior studies have shown a direct association between CP and HAI(Bonten 1998,Aja
     - None
 
 ### Data Files
-1. final_dataset_for_models.csv
+1. **final_dataset_for_models.csv**
 
     **Description:** The final data ready for running Conditional Logistic Regression (CLR) and XGBoost.
 

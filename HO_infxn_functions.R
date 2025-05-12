@@ -1099,6 +1099,10 @@ adt_micro_initial_prep <- function(room_dat,
   print(nrow(adt.micro.raw))
   toc()
   
+  # Print Total Hospitalization
+  cohort_size <- adt.micro.raw %>% group_by(org_group_3) %>% summarise(unique_encounters = n_distinct(hospitalization_id))
+  print(cohort_size)
+  
   # Remove hospitalization episodes where the patient received inpatient antibiotics prior to their stay in the room based on when their abx course finished
   print("Remove potential cases where the patient received concomitant IP/OP antibiotics")
   tic()
@@ -1106,12 +1110,20 @@ adt_micro_initial_prep <- function(room_dat,
   print(nrow(adt.micro.raw))
   toc()
   
+  # Print Total Hospitalization
+  cohort_size <- adt.micro.raw %>% group_by(org_group_3) %>% summarise(unique_encounters = n_distinct(hospitalization_id))
+  print(cohort_size)
+  
   # Remove hospitalization episodes where patients had another IP encounter >2d in duration in the previous 90 days
   print("Drop potential cases where the patient had another hospital encounter in the previous 90 days")
   tic()
   adt.micro.raw <- drop_prev_enc(adt.micro.raw, enc_clean)
   print(nrow(adt.micro.raw))
   toc()
+  
+  # Print Total Hospitalization
+  cohort_size <- adt.micro.raw %>% group_by(org_group_3) %>% summarise(unique_encounters = n_distinct(hospitalization_id))
+  print(cohort_size)
   
   # Add feature for matching cases (time to infxn) to control (LOS in room)
   # print("Add feature for matching cases to control on time to infxn (cases) or LOS (controls)")
@@ -1143,12 +1155,14 @@ generate_unmatched_data <- function(pathogen_hierarchy,
   print(paste0("Identify potential cases of ", pathogen_category))
   tic()
   adt.micro.raw.filtered <- potential_cases(adt.micro.raw.filtered, pathogen_category, day_threshold) 
+  initial_case = nrow(adt.micro.raw.filtered %>% filter(potential_case == 'X'))
   toc()
   
   # Drop subsequent potential cases after first case identified in an eligible room (including ones with same timestamp)
   print(paste0("Remove potential cases identified in room stays after the first case in an episode"))
   tic()
   adt.micro.raw.filtered <- after_first_room(adt.micro.raw.filtered, pathogen_category, day_threshold) 
+  drop_subsequent = nrow(adt.micro.raw.filtered %>% filter(potential_case == 'X'))
   toc()
   
   # Exclude hospitalizations where the patient had the pathogen of interest between day -365 (S. aureus, Enterococcus) / day -182.5 (all others)
@@ -1156,6 +1170,7 @@ generate_unmatched_data <- function(pathogen_hierarchy,
   print(paste0("Remove potential cases that have evidence of prior infection with ", pathogen_category))
   tic()
   adt.micro.cases <- flag_prior_infxn(adt.micro.raw.filtered, pathogen_category, day_threshold) 
+  drop_prior_infxn = nrow(adt.micro.cases %>% filter(potential_case == 'X'))
   toc()
   
   # Select controls (for matching later)
@@ -1163,6 +1178,15 @@ generate_unmatched_data <- function(pathogen_hierarchy,
   tic()
   adt.micro.cc <- generate_controls(adt.micro.cases, pathogen_category) 
   toc()
+  
+  row <- data.frame(
+    pathogen = pathogen_category,
+    initial_cases = initial_case,
+    case_after_drop_subsequent = drop_subsequent,
+    case_after_drop_prior_infection = drop_prior_infxn
+  )
+  
+  flow_chart <<- rbind(flow_chart, row)
   
   return(adt.micro.cc)
 }

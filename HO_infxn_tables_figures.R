@@ -24,7 +24,7 @@
 # Figures (CLR results; CP distributions; SHAP values from XGB models)
 #
 # Authors: Ziming (Alex) Wei, Sanjat Kanjilal
-# Last updated: 2025-02-17
+# Last updated: 2025-04-11
 #####################################################################################################
 
 ##### LIBRARIES ####
@@ -43,8 +43,8 @@ mainDir <- "/data/tide/projects/ho_infxn_ml/"
 setwd(file.path(mainDir))
 
 #### IMPORT DATASETS ####
-cc_final <- readr::read_csv("clean_data/20250217/final_dataset_for_models_20250217_with_elix_features.csv")
-clr.results <- readr::read_csv("results/model_results/20250217/clogit_coefficients.csv")
+cc_final <- readr::read_csv("clean_data/20250411/final_dataset_for_models_20250411.csv")
+clr.results <- readr::read_csv("results/model_results/20250411/clogit_coefficients.csv")
 
 # Filter for result of colonization pressure analysis and set factor leve.s
 clean.data.table <- cc_final %>%
@@ -348,7 +348,7 @@ table1 <- sample_size %>%
   dplyr::left_join(abx.temp) 
 
 # Save table 1
-readr::write_csv(table1, file = "results/model_results/20250217/table1.csv")
+readr::write_csv(table1, file = "results/model_results/20250411/table1.csv")
 
 rm(age.temp, sex.temp, surgery.temp, elix.temp, LOS.temp, 
    matching.duration.temp, time.to.infxn.temp, abx.temp)
@@ -613,7 +613,7 @@ clr.cp.results <- dplyr::bind_rows(cognate.enteric, cognate.skin, cognate.enviro
          pval_raw:sig_flag)
 
 # Save clean CLR results
-readr::write_csv(clr.cp.results, file = "results/model_results/20250217/clr_results_clean.csv")
+readr::write_csv(clr.cp.results, file = "results/model_results/20250411/clr_results_clean.csv")
 
 # Clean up
 rm(orgs_to_keep, target.cp.data, enteric.cp, enteric.target, skin.cp, environmental.cp, 
@@ -778,7 +778,7 @@ shap_value_matrix = data.frame()
 elix_shap_matrix = data.frame()
 for (run_name in all_runs){
   for (fold in c(1,2,3,4,5)){
-    model = xgb.load(paste0('results/model_results/20250217/xgb/model_checkpoints/environmental_', run_name ,'/fold_',fold,'.model'))
+    model = xgb.load(paste0('results/model_results/20250411/xgb/model_checkpoints/environmental_', run_name ,'/fold_',fold,'.model'))
     
     dat.run <- cc_final %>% filter(run == run_name & match == 'environmental')
     dat.run <- dat.run %>% select(elix_index_mortality, CDiff_cp:DR_PsA_cp)
@@ -831,7 +831,7 @@ for (run_name in all_runs){
   
   plot <- shap.plot.summary(shap_long)
   
-  ggsave(filename = paste0('results/model_results/20250217/xgb/shap_plots/environmental_', run_name,'_shap_summary.pdf'), 
+  ggsave(filename = paste0('results/model_results/20250411/xgb/shap_plots/environmental_', run_name,'_shap_summary.pdf'), 
          plot = plot, 
          width = 8, 
          height = 6)
@@ -843,8 +843,13 @@ elix_shap_matrix <- elix_shap_matrix %>% filter(variable %in% all_runs)
 elix_shap_matrix$variable = factor(elix_shap_matrix$variable)
 elix_plot <- shap.plot.summary(elix_shap_matrix)
 
-write.csv(x = shap_value_matrix, file = 'results/model_results/20250217/xgb/shap_plots/shap_values.csv',row.names = FALSE)
-ggsave(filename = paste0('results/model_results/20250217/xgb/shap_plots/elixhauser_shap_summary.pdf'), 
+order_list <- c("DS_Entero_cp","ESBL_cp","VSE_cp","VRE_cp","CDiff_cp",
+                "MSSA_cp","MRSA_cp","DS_PsA_cp","DR_PsA_cp","elix_index_mortality")
+shap_value_matrix$variable <- factor(shap_value_matrix$variable, levels = order_list)
+shap_value_matrix_ordered <- shap_value_matrix[order(shap_value_matrix$variable), ]
+
+write.csv(x = shap_value_matrix, file = 'results/model_results/20250411/xgb/shap_plots/shap_values.csv',row.names = FALSE)
+ggsave(filename = paste0('results/model_results/20250411/xgb/shap_plots/elixhauser_shap_summary.pdf'), 
        plot = elix_plot, 
        width = 8, 
        height = 6)

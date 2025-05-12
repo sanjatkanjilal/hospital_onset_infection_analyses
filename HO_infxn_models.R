@@ -29,6 +29,10 @@
 library(tidyverse)
 library(survival)
 library(xgboost)
+library(caret)
+library(pROC)
+library(PRROC)
+library(Matrix)
 # library(caret)
 # library(pROC)
 # library(Matrix)
@@ -165,12 +169,12 @@ env_dat_with_pred <- data.frame()
 run_xgboost_environmental <- function(y){
   
   # Filter for dataset to contain the focused pathogent
-  dat.run <- dat.match %>% filter(run == y)
+  dat.run <- dat.match %>% dplyr::filter(run == y)
   
   # Select Features to include in training the conditional logistic regression model
   prior_path_target <- paste0("prior_", y)
   print(paste("Environmental match regression for", y))
-  dat.run <- dat.run %>% select(group_binary, CDiff_cp:DR_PsA_cp)
+  dat.run <- dat.run %>% select(group_binary, elix_index_mortality, CDiff_cp:DR_PsA_cp)
   dat.run <- dat.run %>% select(where(~n_distinct(.) > 1)) # Remove features with only 1 value among samples
   
   # One-hot encode non-numeric columns
@@ -225,7 +229,7 @@ run_xgboost_environmental <- function(y){
     # Make predictions on test data
     test_data <- data.frame(test_data)
     test_data$pred <- predict(xgb_model, xgb_test)
-    env_dat_with_pred <<- rbind(env_dat_with_pred, test_data %>% select(CDiff_cp:DR_PsA_cp, group_binary, pred) %>% mutate(run = y, match = 'environmental',fold = i))
+    env_dat_with_pred <<- rbind(env_dat_with_pred, test_data %>% select(elix_index_mortality, CDiff_cp:DR_PsA_cp, group_binary, pred) %>% mutate(run = y, match = 'environmental',fold = i))
     
     # Calculate and store AUC for each fold
     roc_obj <- roc(test_data$group_binary, test_data$pred)
@@ -239,7 +243,7 @@ run_xgboost_environmental <- function(y){
     importance_list[[i]] <- xgb.importance(model = xgb_model)
     
     # Save the models
-    output_dir = paste0("results/model_results/",today,"/xgb/model_checkpoints/environmental_", y)
+    output_dir = paste0("results/model_results/","20250411","/xgb/model_checkpoints/environmental_", y)
     if (!dir.exists(output_dir)){
       dir.create(output_dir)
     } 
@@ -309,14 +313,14 @@ run_xgboost_environmental <- function(y){
 
 # Running environmental match
 for (rubric in matching_rubric){
-  dat.match <- cc_final %>% filter(match == rubric)
+  dat.match <- cc_final %>% dplyr::filter(match == rubric)
   if (rubric == 'environmental'){
     remaining_targets = setdiff(targets, env_dat_with_pred$run)
     for (target in remaining_targets){
       cat(paste0("Running environmental match models for target: ", target), "\n\n")
       run_xgboost_environmental(target)
-      write.csv(env_dat_with_pred, paste0("results/model_results/",today,"/xgb/environmental_match_predictions.csv"), row.names = FALSE)
-      write.csv(xgboost_metrics, paste0("results/model_results/",today,"/xgb/xgboost_metrics.csv"), row.names = FALSE)
+      write.csv(env_dat_with_pred, paste0("results/model_results/","20250411","/xgb/environmental_match_predictions.csv"), row.names = FALSE)
+      write.csv(xgboost_metrics, paste0("results/model_results/","20250411","/xgb/xgboost_metrics.csv"), row.names = FALSE)
     }
   }
 }

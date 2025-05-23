@@ -33,6 +33,7 @@ library(conflicted)
 library(SHAPforxgboost)
 library(xgboost)
 library(dplyr)
+library(scales)
 conflicts_prefer(dplyr::filter())
 conflicts_prefer(base::`%in%`)
 
@@ -43,7 +44,8 @@ mainDir <- "/data/tide/projects/ho_infxn_ml/"
 setwd(file.path(mainDir))
 
 #### IMPORT DATASETS ####
-cc_final <- readr::read_csv("clean_data/20250411/final_dataset_for_models_20250411.csv")
+# cc_final <- readr::read_csv("clean_data/20250411/final_dataset_for_models_20250411.csv")
+cc_final <- read.csv('/data/tide/projects/ho_infxn_ml/clean_data/20250411/final_dataset_for_models_elix_20250411.csv')
 clr.results <- readr::read_csv("results/model_results/20250411/clogit_coefficients.csv")
 
 # Filter for result of colonization pressure analysis and set factor leve.s
@@ -105,11 +107,16 @@ elix_pooled <- clean.data.table %>%
 
 elix_indiv <- clean.data.table %>%
   dplyr::group_by(run, group) %>%
-  dplyr::summarise(across(starts_with("elix"), ~ mean(. != 0, na.rm = TRUE) * 100))
+  dplyr::summarise(across(starts_with("elix"), ~ mean(. != 0, na.rm = TRUE))) %>% 
+  select(-elix_index_mortality)
 
 elix_indiv_pooled <- clean.data.table %>%
   dplyr::group_by(group) %>%
-  dplyr::summarise(across(starts_with("elix"), ~ mean(. != 0, na.rm = TRUE) * 100))
+  dplyr::summarise(across(starts_with("elix"), ~ mean(. != 0, na.rm = TRUE))) %>% 
+  select(-elix_index_mortality)
+
+write.csv(elix_indiv, "results/model_results/20250411/elix_table_1.csv")
+write.csv(elix_indiv, "results/model_results/20250411/pooled_elix_table_1.csv")
 
 
 # Time to infection (cases only)
@@ -657,6 +664,20 @@ noncognate.skin.env.plot <- target.cp.plot(clr.cp.results, comparison_groups = "
 noncognate.env.enteric.plot <- target.cp.plot(clr.cp.results, comparison_groups = "noncognate_env_enteric")
 noncognate.env.skin.plot <- target.cp.plot(clr.cp.results, comparison_groups = "noncognate_env_skin")
 
+# Plot CLR Coef Heatmap
+ggplot(clr.cp.results, aes(x = target, y = variable, fill = coef)) +
+  geom_tile(color = "white") +                     # white grid lines
+  scale_fill_gradient2(                            # diverging palette centered at 0
+    low = "#4575B4", mid = "white", high = "#D73027",
+    midpoint = 0, name = "% Change in Odds"
+  ) +
+  labs(x = "Target", y = "Colonization Pressure") +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid  = element_blank()
+  )
+
 # Clean up
 rm(clr.results, clr.cp.results, clr.prepped, target.cp.plot, cognate.enteric.plot, cognate.skin.plot, cognate.environmental.plot,
    noncognate.enteric.skin.plot, noncognate.enteric.env.plot, 
@@ -853,6 +874,87 @@ ggsave(filename = paste0('results/model_results/20250411/xgb/shap_plots/elixhaus
        plot = elix_plot, 
        width = 8, 
        height = 6)
+
+# Plot CP Correlation
+corr_plot_cp = c("DS_Entero_cp","ESBL_cp","VSE_cp","VRE_cp","CDiff_cp")
+corr_plot_cohort = c("DS_E_coli","ESBL_K_pneumoniae","VSE_faecalis","VRE_faecium")
+
+for (r in corr_plot_cohort) {
+  for (cp_col in corr_plot_cp) {
+    plot_data <- cc_final %>%
+      filter(run == r) %>%
+      select(group, !!sym(cp_col)) %>%
+      rename(corr_cp = !!sym(cp_col)) %>%
+      group_by(group)
+    
+    # Plot
+    cdf_data <- plot_data %>%
+      group_modify(~ {
+        d <- .x %>%
+          arrange(corr_cp) %>%
+          mutate(
+            y = cumsum(rep(1, n())) / n(),  # proportion ≤ value
+            x = corr_cp
+          )
+        return(d)
+      })
+    
+    p <- ggplot(cdf_data, aes(x = x, y = y, color = group)) +
+      geom_line(size = 1.2) +
+      labs(
+        title = paste("Run:", r, "| CP:", cp_col),
+        x = "corr_cp (ascending)",
+        y = "Cumulative distribution (≤ cp)"
+      ) +
+      scale_y_continuous(labels = percent_format(accuracy = 1)) +
+      scale_color_manual(values = c("case" = "#D4A64A", "control" = "#6A7B9B")) +
+      theme_minimal() +
+      theme(plot.title = element_text(hjust = 0.5))
+    
+    ggsave(filename = paste0("/data/tide/projects/ho_infxn_ml/results/figures_tables/20250411/cp_correlation_plots/", r, "_", cp_col, ".pdf"), plot = p, width = 6, height = 4)
+    
+  }
+
+}
+
+cdf_data <- cc_final %>%
+  filter(run %in% corr_plot_cohort) %>%
+  pivot_longer(
+    cols = all_of(corr_plot_cp),
+    names_to = "cp_col",
+    values_to = "corr_cp"
+  ) %>%
+  group_by(run, cp_col, group) %>%
+  arrange(corr_cp, .by_group = TRUE) %>%
+  mutate(
+    y = cumsum(rep(1, n())) / n(),  # empirical CDF
+    x = corr_cp
+  ) %>%
+  ungroup()
+
+# Plot with facet_grid
+p <- ggplot(cdf_data, aes(x = x, y = y, color = group)) +
+  geom_line(size = 1.2) +
+  facet_grid(run ~ cp_col, scales = "free_x") +
+  labs(
+    x = "corr_cp (ascending)",
+    y = "Cumulative distribution (≤ cp)",
+    title = "Cumulative Distribution by Run and CP"
+  ) +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  scale_color_manual(values = c("case" = "#D4A64A", "control" = "#6A7B9B")) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    strip.text = element_text(size = 10)
+  )
+
+# Save full grid plot (adjust size as needed)
+ggsave(
+  filename = "/data/tide/projects/ho_infxn_ml/results/figures_tables/20250411/cp_correlation_plots/all_facet_grid_plot.pdf",
+  plot = p,
+  width = 16, height = 10
+)
 
 #### GLOBAL CLEAN UP ####
 rm(mainDir, cc_final, clr.results)

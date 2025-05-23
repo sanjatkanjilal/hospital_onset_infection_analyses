@@ -159,6 +159,14 @@ abx_of_interest <- c("penicillin_0_60", "extended_spectrum_penicillin_0_60", "ce
 
 variables_to_drop <- names(matched.final.models)[grepl("_0_60$", names(matched.final.models)) & !(names(matched.final.models) %in% abx_of_interest)]
 
+matched.final.models.with_elix <- matched.final.models %>% 
+  dplyr::select(match:group_index, group_binary, PatientID, DTS_in_month, DTS_in_year, duration,
+                time_to_infxn, matching_duration, age, sex, starts_with('elix'), 
+                elix_index_mortality, any_surgery, admit_source_clean, 
+                any_abx_0_60:other_abx_0_60, prior_C_diff:DR_PsA_cp) %>%
+  dplyr::select(-all_of(variables_to_drop)) %>%
+  dplyr::select(-matches("60_plus"))
+
 matched.final.models <- matched.final.models %>% 
   dplyr::select(match:group_index, group_binary, PatientID, DTS_in_month, DTS_in_year, duration,
          time_to_infxn, matching_duration, age, sex, # starts_with('elix'), 
@@ -170,6 +178,8 @@ matched.final.models <- matched.final.models %>%
 # Drop remaining NAs from predictor features
 matched.final.models <- matched.final.models %>%
   tidyr::drop_na(age, CDiff_cp:DR_PsA_cp)
+matched.final.models.with_elix <- matched.final.models.with_elix %>%
+  tidyr::drop_na(age, CDiff_cp:DR_PsA_cp)
 
 # Impute the remaining missing values with MICE (Elixhauser scores)
 # imp <- mice(matched.final)
@@ -179,6 +189,7 @@ matched.final.models <- matched.final.models %>%
 colSums(is.na(matched.final.models))
 
 # Save file
+readr::write_csv(matched.final.models.with_elix, file = paste0("clean_data/20250411/final_dataset_for_models_elix_20250411.csv"))
 readr::write_csv(matched.final.models, file = paste0("clean_data/20250411/final_dataset_for_models_20250411.csv"))
 
 #### CLEAN UP ####

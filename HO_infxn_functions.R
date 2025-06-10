@@ -68,6 +68,9 @@ grouping_function <- function(data, id, index, start, end, time_interval)
   
   while(sum(is.na(data$group)) > 0) {
     
+    # print(dplyr::filter(data,PatientID=='Z10051770'), n=41)
+    # print(dplyr::filter(data,is.na(group)))
+    
     if (sum(is.na(data$group)) == 0)  {
       
       break
@@ -321,22 +324,36 @@ abx_courses <- function(abx_ip_durations, abx_op_durations)
 # ENCOUNTERS
 
 # Process encounter data
-enc_processing <- function(enc)
+enc_processing <- function(enc, sensitivity_analysis=FALSE)
 {
   # Filter to encounters lasting >48 hours and then indexing
   
   tic()
   print("Initial cleaning of encounter data")
-  enc.prelim <- enc %>%
-    dplyr::filter(visit_type == "Inpatient") %>%
-    dplyr::select(PatientID, visit_type, hospitalAdmitDTS, hospitalDischargeDTS) %>%
-    dplyr::distinct() %>%
-    dplyr::arrange(PatientID, hospitalAdmitDTS) %>%
-    dplyr::mutate(duration = as.numeric(as.difftime(hospitalDischargeDTS - hospitalAdmitDTS), units = "days")) %>%
-    dplyr::filter(duration > 2) %>%
-    dplyr::group_by(PatientID) %>%
-    dplyr::mutate(enc_index = row_number()) %>%
-    dplyr::ungroup()
+  if(sensitivity_analysis==TRUE){
+    enc.prelim <- enc %>%
+      dplyr::filter(visit_type == "Inpatient") %>%
+      dplyr::select(PatientID, visit_type, hospitalAdmitDTS, hospitalDischargeDTS) %>%
+      dplyr::distinct() %>%
+      dplyr::arrange(PatientID, hospitalAdmitDTS) %>%
+      dplyr::mutate(duration = as.numeric(as.difftime(hospitalDischargeDTS - hospitalAdmitDTS), units = "days")) %>%
+      dplyr::filter(duration > 0) %>%
+      dplyr::group_by(PatientID) %>%
+      dplyr::mutate(enc_index = row_number()) %>%
+      dplyr::ungroup()
+  }
+  else{
+    enc.prelim <- enc %>%
+      dplyr::filter(visit_type == "Inpatient") %>%
+      dplyr::select(PatientID, visit_type, hospitalAdmitDTS, hospitalDischargeDTS) %>%
+      dplyr::distinct() %>%
+      dplyr::arrange(PatientID, hospitalAdmitDTS) %>%
+      dplyr::mutate(duration = as.numeric(as.difftime(hospitalDischargeDTS - hospitalAdmitDTS), units = "days")) %>%
+      dplyr::filter(duration > 2) %>%
+      dplyr::group_by(PatientID) %>%
+      dplyr::mutate(enc_index = row_number()) %>%
+      dplyr::ungroup()
+  }  
   toc()
   
   # Group admit/discharge episodes within 7 days of each other into the same hospitalization episode

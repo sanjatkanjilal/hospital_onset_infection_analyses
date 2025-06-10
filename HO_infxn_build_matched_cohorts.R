@@ -48,8 +48,8 @@ mainDir <- "/data/tide/projects/ho_infxn_ml/"
 setwd(file.path(mainDir))
 
 # Global paths
-path_cat_table_filename <- "clean_data/20250411/path_cat_table_matching.csv"
-unmatched_features_filename <- "clean_data/20250411/unmatched_case_controls_features_org_group_3.csv"
+path_cat_table_filename <- "clean_data/20250603_SensitivityAnalysis/path_cat_table_matching.csv"
+unmatched_features_filename <- "clean_data/20250603_SensitivityAnalysis/unmatched_case_controls_features_org_group_3.csv"
 
 #### BUILD MATCHED DATASETS ####
 
@@ -122,7 +122,7 @@ matched.final <- dplyr::bind_rows(environment.matched, patient.matched) %>%
   dplyr::distinct()
 
 # Save matched patient-level dataset + features
-readr::write_csv(matched.final, file = paste0("clean_data/20250411/final_cohort_org_group_3.csv"))
+readr::write_csv(matched.final, file = paste0("clean_data/20250603_SensitivityAnalysis/final_cohort_org_group_3.csv"))
 
 #### FINAL DATASET CLEAN / PREP FOR MODELS ####
 
@@ -189,8 +189,8 @@ matched.final.models.with_elix <- matched.final.models.with_elix %>%
 colSums(is.na(matched.final.models))
 
 # Save file
-readr::write_csv(matched.final.models.with_elix, file = paste0("clean_data/20250411/final_dataset_for_models_elix_20250411.csv"))
-readr::write_csv(matched.final.models, file = paste0("clean_data/20250411/final_dataset_for_models_20250411.csv"))
+readr::write_csv(matched.final.models.with_elix, file = paste0("clean_data/20250603_SensitivityAnalysis/final_dataset_for_models_elix_20250603_SensitivityAnalysis.csv"))
+readr::write_csv(matched.final.models, file = paste0("clean_data/20250603_SensitivityAnalysis/final_dataset_for_models_20250603_SensitivityAnalysis.csv"))
 
 #### CLEAN UP ####
 

@@ -27,6 +27,12 @@
 # Last updated: 2025-02-17
 #####################################################################################################
 
+library(dplyr)
+library(lubridate)
+library(reshape2)
+library(data.table)
+library(conflicted)
+
 #### SET ENVIRONMENT VARIABLES / IMPORT FUNCTIONS ####
 conflicted::conflicts_prefer(dplyr::row_number)
 conflicts_prefer(dplyr::filter())
@@ -101,7 +107,7 @@ abx.courses <- abx_courses(abx_ip_durations, abx_op_durations)
 # Encounter data
 enc <- readr::read_csv(enc_filename)
 
-enc_clean <- enc_processing(enc)
+enc_clean <- enc_processing(enc, sensitivity_analysis = FALSE)
 
 # Map admission disposition to clean categories
 admt <- readr::read_csv(admt_filename)

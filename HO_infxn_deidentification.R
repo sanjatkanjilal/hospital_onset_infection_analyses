@@ -49,6 +49,9 @@ deidentified_data$deidentified_year <- lubridate::year(deidentified_data$deident
 
 deidentified_data <- deidentified_data %>% select(match:group_binary, deidentified_patient_id, deidentified_month, deidentified_year, duration:DR_PsA_cp)
 
+# Deidentify Age
+deidentified_data$age <- ifelse(deidentified_data$age > 90, ">90", as.character(deidentified_data$age))
+
 # Save Data
 write_csv(deidentified_data,
           file = '/data/tide/projects/ho_infxn_ml/clean_data/20250411/deidentified_final_dataset_for_models_with_elix.csv')

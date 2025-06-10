@@ -56,18 +56,18 @@ mainDir <- "/data/tide/projects/ho_infxn_ml/"
 setwd(file.path(mainDir))
 
 # Global paths
-unmatched_cohort_no_features <- "clean_data/20250411/unmatched_case_controls_no_features_org_group_3.csv"
-adt_micro_raw <- "clean_data/20250411/adt_micro_raw.csv"
+unmatched_cohort_no_features <- "clean_data/20250603_SensitivityAnalysis/unmatched_case_controls_no_features_org_group_3.csv"
+adt_micro_raw <- "clean_data/20250603_SensitivityAnalysis/adt_micro_raw.csv"
 dems_filename <- "input_data/20250411/MGB_demographics_20240715.csv"
-abx_courses <- "clean_data/20250411/abx_courses.csv"
+abx_courses <- "clean_data/20250603_SensitivityAnalysis/abx_courses.csv"
 elix_filename <-"input_data/20250411/MGB_elixhauser_20240715_updated.csv"
 cpt_filename <- "input_data/20250411/MGB_procedures_20240715.csv"
-admt_filename <- "clean_data/20250411/admt_clean.csv"
+admt_filename <- "clean_data/20250603_SensitivityAnalysis/admt_clean.csv"
 location_map_filename <- "mappings/department_mapping.csv"
-enc_filename <- "clean_data/20250411/enc_clean.csv"
+enc_filename <- "clean_data/20250603_SensitivityAnalysis/enc_clean.csv"
 ADT_filename <- "input_data/20250411/MGB_ADT_20140131-20240713.csv"
 micro_filename <- "input_data/20250411/micro.ground_truth_20150525-20250131.csv"
-path_cat_table_filename <- "clean_data/20250411/path_cat_table.csv"
+path_cat_table_filename <- "clean_data/20250603_SensitivityAnalysis/path_cat_table.csv"
 
 # Set pathogen hierarchy
 pathogen_hierarchy <- "org_group_3"
@@ -128,13 +128,13 @@ cp_features <- cp_features.prelim %>%
   distinct()
 
 ####  SAVE FEATURE DATASETS ####
-readr::write_csv(dem_features, file = paste0("clean_data/20250411/dems_", pathogen_hierarchy, ".csv"))
-readr::write_csv(abx_features, file = paste0("clean_data/20250411/abx_", pathogen_hierarchy, ".csv"))
-readr::write_csv(elix_features, file = paste0("clean_data/20250411/elix_", pathogen_hierarchy, ".csv"))
-readr::write_csv(cpt_features, file = paste0("clean_data/20250411/cpt_", pathogen_hierarchy, ".csv"))
-readr::write_csv(admt_features, file = paste0("clean_data/20250411/admt_", pathogen_hierarchy, ".csv"))
-readr::write_csv(prior_occupant_features, file = paste0("clean_data/20250411/prior_occupant_", pathogen_hierarchy, ".csv"))
-readr::write_csv(cp_features, file = paste0("clean_data/20250411/col_pressure_", pathogen_hierarchy, ".csv"))
+readr::write_csv(dem_features, file = paste0("clean_data/20250603_SensitivityAnalysis/dems_", pathogen_hierarchy, ".csv"))
+readr::write_csv(abx_features, file = paste0("clean_data/20250603_SensitivityAnalysis/abx_", pathogen_hierarchy, ".csv"))
+readr::write_csv(elix_features, file = paste0("clean_data/20250603_SensitivityAnalysis/elix_", pathogen_hierarchy, ".csv"))
+readr::write_csv(cpt_features, file = paste0("clean_data/20250603_SensitivityAnalysis/cpt_", pathogen_hierarchy, ".csv"))
+readr::write_csv(admt_features, file = paste0("clean_data/20250603_SensitivityAnalysis/admt_", pathogen_hierarchy, ".csv"))
+readr::write_csv(prior_occupant_features, file = paste0("clean_data/20250603_SensitivityAnalysis/prior_occupant_", pathogen_hierarchy, ".csv"))
+readr::write_csv(cp_features, file = paste0("clean_data/20250603_SensitivityAnalysis/col_pressure_", pathogen_hierarchy, ".csv"))
 
 #### CREATE FULLY FEATURIZED COHORT ####
 
@@ -154,7 +154,7 @@ path_cat_table <- readr::read_csv(path_cat_table_filename)
 
 # Select organisms with n>300 cases in unmatched cohorts
 path_cat_table_matching <- pathogen_selection(cc.unmatched, path_cat_table)
-readr::write_csv(path_cat_table_matching, file = paste0("clean_data/20250411/path_cat_table_matching.csv"))
+readr::write_csv(path_cat_table_matching, file = paste0("clean_data/20250603_SensitivityAnalysis/path_cat_table_matching.csv"))
 
 unmatched_features <- do.call(dplyr::bind_rows, 
                               lapply(levels(factor(path_cat_table_matching$pathogen_category)), function(y) 
@@ -198,7 +198,7 @@ unmatched_features <- unmatched_features %>%
   dplyr::distinct()
 
 #### SAVE UNMATCHED COHORTS WITH FEATURES ADDED ####
-readr::write_csv(unmatched_features, file = paste0("clean_data/20250411/unmatched_case_controls_features_", pathogen_hierarchy, ".csv"))
+readr::write_csv(unmatched_features, file = paste0("clean_data/20250603_SensitivityAnalysis/unmatched_case_controls_features_", pathogen_hierarchy, ".csv"))
 
 #### CLEAN UP ####
 

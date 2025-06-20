@@ -190,15 +190,11 @@ To ensure compliance with HIPAA guidelines and protect patient privacy:
 ---
 ## Usage Notes
 ### Ethical Considerations
-This study was approved by **[TODO]** . The IRB determined the study involves minimal risk, and patient consent was waived due to the use of de-identified retrospective data.
-
----
-## Acknowledgments
-This dataset was developed with support from **[TODO]**. The authors acknowledge all contributors who assisted in creating the codebase and dataset.
+This study was approved by the Institutional Review Board (IRB) of Massachusetts General Brigham with a waived requirement for informed consent.
 
 ---
 ## Citation
-When using the code and dataset, please cite: 1. Sagers L, Wei Z, McKenna C, Chan C, Agan AA, Pak R, et al. Hospital unit colonization pressure and nosocomial acquisition of drug susceptible and drug resistant pathogens. 
+When using the code and dataset, please cite: Sagers L, Wei Z, McKenna C, Chan C, Agan AA, Pak R, et al. Hospital unit colonization pressure and nosocomial acquisition of drug susceptible and drug resistant pathogens. 
 
 
 ## Contact

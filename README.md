@@ -198,7 +198,7 @@ This dataset was developed with support from **[TODO]**. The authors acknowledge
 
 ---
 ## Citation
-When using the code and dataset, please cite: **[TODO]**
+When using the code and dataset, please cite: 1. Sagers L, Wei Z, McKenna C, Chan C, Agan AA, Pak R, et al. Hospital unit colonization pressure and nosocomial acquisition of drug susceptible and drug resistant pathogens. 
 
 
 ## Contact

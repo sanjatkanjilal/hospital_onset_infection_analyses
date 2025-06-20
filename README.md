@@ -180,7 +180,7 @@ To ensure compliance with HIPAA guidelines and protect patient privacy:
 
 ---
 ## Sharing/Access Information
-- This dataset is publicly available on **[TODO]** for research purposes.
+- This dataset is publicly available on Physionet[] for research purposes.
 - Users are encouraged to contact the code base/dataset creators for support or further clarification of needed.
 
 ---

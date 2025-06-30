@@ -12,10 +12,10 @@ library(tidyverse)
 library(dplyr)
 
 clean_data <- data.table::fread(file = '/data/tide/projects/ho_infxn_ml/clean_data/20250411/final_dataset_for_models_elix_20250411.csv')
-clean_data <- clean_data %>% dplyr::filter(match == 'environmental')
+clean_data <- clean_data %>% select(-admit_source_clean)
 
 # Remove Admission Source
-deidentified_data <- clean_data %>% select(-admit_source_clean)
+deidentified_data <- clean_data
 
 # Map Patient ID to Random Number
 unique_patient_id <- unique(deidentified_data$PatientID)
@@ -53,9 +53,14 @@ deidentified_data <- deidentified_data %>% select(match:group_binary, deidentifi
 deidentified_data$age <- ifelse(deidentified_data$age > 90, ">90", as.character(deidentified_data$age))
 
 # Save Data
-write_csv(deidentified_data,
+env_deidentified_data <- deidentified_data %>% dplyr::filter(match=='environmental')
+pat_deidentified_data <- deidentified_data %>% dplyr::filter(match=='patient')
+
+write_csv(env_deidentified_data,
           file = '/data/tide/projects/ho_infxn_ml/clean_data/20250411/deidentified_final_dataset_for_models_with_elix.csv')
 
+write_csv(pat_deidentified_data,
+          file = '/data/tide/projects/ho_infxn_ml/clean_data/20250411/patient_match_deidentified_final_dataset_for_models_with_elix.csv')
 
 
 

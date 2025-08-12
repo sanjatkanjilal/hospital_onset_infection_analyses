@@ -1,6 +1,6 @@
 # The association of hospital unit colonization pressure on nosocomial acquisition of drug-susceptible and drug-resistant pathogens
 
-![cp_calculation](colonization_pressure_20241205.png)
+![cp_calculation](colonization_pressure.png)
 
 ## Background
 

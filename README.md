@@ -10,7 +10,7 @@ Active surveillance for colonization of asymptomatic individuals is a key part o
 
 Prior studies have shown a direct association between CP and HAI(Bonten 1998,Ajao 2011,Arvaniti 2012), suggesting its potential role as a risk assessment tool. However, analyses were limited to known drug-resistant nosocomial pathogens and to ICU settings. Whether the same relationship applies to drug-susceptible organisms, which are responsible for a majority of infections in hospitals in the United States, and to non-ICU settings, remains unknown. Thus, the objectives of this study are twofold. Our first goal is to build a prototype of an infection control informatics tool that can construct ward-level CP across a variety of drug-susceptible and drug-resistant organisms using EHR data. Second, we test the hypothesis that CP is associated with HAI from those organisms by applying our prototype to a cohort of HAI cases matched to controls by demographics, surgery, and fine-grained antibiotic exposures. 
 
-![matching_process](study design_20250324.png)
+![matching_process](study_design_20250324.png)
 
 ---
 

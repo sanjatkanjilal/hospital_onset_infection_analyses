@@ -1,5 +1,7 @@
 # The association of hospital unit colonization pressure on nosocomial acquisition of drug-susceptible and drug-resistant pathogens
 
+![cp_calculation](colonization_pressure_20241205.png)
+
 ## Background
 
 Hospitalized patients are at risk for developing hospital-acquired infections (HAI). A primary mechanism for HAI begins when a patient who is colonized with a potential pathogen is admitted to the hospital. That individual becomes a reservoir from which the hands and clothing of healthcare workers, hospital equipment and room surfaces are contaminated. Contact with these contaminated surfaces results in transmission to and colonization of a new vulnerable host. Colonization is a strong predictor of future clinical infection(Martin 2016,Eiff 2001,Worley 2020). The cycle repeats when the second patient becomes a new reservoir for onward nosocomial transmission. 
@@ -7,6 +9,8 @@ Hospitalized patients are at risk for developing hospital-acquired infections (H
 Active surveillance for colonization of asymptomatic individuals is a key part of infection control, but requires significant investment in infrastructure and human resources. For this reason it is typically limited to intensive care units  (ICUs) and other high-risk units, and to a few drug-resistant or high-virulence organisms, such as methicillin-resistant Staphylococcus aureus (MRSA) and vancomycin-resistant Enterococcus species (VRE). Colonization pressure (CP), defined as the prevalence of an organism among patients in the ward into which a patient enters, has the potential to augment active surveillance efforts. This is due to the fact that estimating CP does not require new data collection, instead relying on information already present in the electronic health record (EHR). Furthermore, colonization pressure can easily be calculated for any number of organisms in any area of the hospital using routine EHR data, whereas expanding active surveillance can be disruptive to care and costly. 
 
 Prior studies have shown a direct association between CP and HAI(Bonten 1998,Ajao 2011,Arvaniti 2012), suggesting its potential role as a risk assessment tool. However, analyses were limited to known drug-resistant nosocomial pathogens and to ICU settings. Whether the same relationship applies to drug-susceptible organisms, which are responsible for a majority of infections in hospitals in the United States, and to non-ICU settings, remains unknown. Thus, the objectives of this study are twofold. Our first goal is to build a prototype of an infection control informatics tool that can construct ward-level CP across a variety of drug-susceptible and drug-resistant organisms using EHR data. Second, we test the hypothesis that CP is associated with HAI from those organisms by applying our prototype to a cohort of HAI cases matched to controls by demographics, surgery, and fine-grained antibiotic exposures. 
+
+![matching_process](study design_20250324.png)
 
 ---
 

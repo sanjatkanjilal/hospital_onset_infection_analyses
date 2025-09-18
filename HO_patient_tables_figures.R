@@ -44,21 +44,20 @@ mainDir <- "/data/tide/projects/ho_infxn_ml/"
 setwd(file.path(mainDir))
 
 #### IMPORT DATASETS ####
-# cc_final <- readr::read_csv("clean_data/20250411/final_dataset_for_models_20250411.csv")
-# cc_final <- read.csv('/data/tide/projects/ho_infxn_ml/clean_data/20250411/final_dataset_for_models_elix_20250411.csv')
-cc_final <- read.csv('clean_data/HO_infxn_environmental_analysis.csv')
+cc_final <- read.csv('clean_data/HO_infxn_patient_analysis.csv')
 clr.results <- readr::read_csv("results/model_results/20250411/clogit_coefficients.csv")
 
 # Filter for result of colonization pressure analysis and set factor leve.s
 clean.data.table <- cc_final %>%
-  dplyr::filter(match == "environmental") %>%
+  dplyr::filter(match == "patient") %>%
+  dplyr::filter(sex != "Other") %>%
   dplyr::filter(run %in% c("DS_E_coli", "ESBL_E_coli", "DS_K_pneumoniae", "ESBL_K_pneumoniae", 
-                                             "C_diff", "VSE_faecalis", "VRE_faecium", 
-                                             "MSSA", "MRSA", "DS_P_aeruginosa", "DR_P_aeruginosa")) %>%
+                           "C_diff", "VSE_faecalis", "VRE_faecium", 
+                           "MSSA", "MRSA", "DS_P_aeruginosa", "DR_P_aeruginosa")) %>%
   dplyr::mutate(run = factor(run, levels = c("DS_E_coli", "ESBL_E_coli", "DS_K_pneumoniae", "ESBL_K_pneumoniae", 
-                                      "C_diff", "VSE_faecalis", "VRE_faecium", 
-                                      "MSSA", "MRSA", "DS_P_aeruginosa", "DR_P_aeruginosa")))
-  
+                                             "C_diff", "VSE_faecalis", "VRE_faecium", 
+                                             "MSSA", "MRSA", "DS_P_aeruginosa", "DR_P_aeruginosa")))
+
 library(dplyr)
 
 matched.final <- cc_final
@@ -82,11 +81,11 @@ diffs <- dup_groups %>%
   do({
     data <- .
     if (nrow(data) < 2) return(NULL)
-
+    
     # Compare first row to others in the group
     ref <- data[1, other_cols]
     comparison <- data[-1, other_cols]
-
+    
     differences <- comparison != ref[rep(1, nrow(comparison)), ]
     result <- data.frame(ref_row = 1, compare_row = 2:nrow(data),
                          Column = rep(other_cols, each = nrow(comparison)),
@@ -107,6 +106,8 @@ print(diff_cols)
 print(duplicated_rows)
 #### TABLE: BASELINE CHARACTERISTICS ####
 
+clean.data.table$PatientID = clean.data.table$deidentified_patient_id
+
 # Sample size
 sample_size <- clean.data.table %>%
   dplyr::group_by(run, group) %>%
@@ -119,9 +120,9 @@ sample_size_pooled <- clean.data.table %>%
 age <- clean.data.table %>%
   dplyr::group_by(run, group) %>%
   dplyr::summarise(n = dplyr::n(),
-            age_mean = mean(age),
-            age_sd = sd(age),
-            age_se = age_sd / sqrt(n))
+                   age_mean = mean(age),
+                   age_sd = sd(age),
+                   age_se = age_sd / sqrt(n))
 
 age_pooled <- clean.data.table %>%
   dplyr::group_by(group) %>%
@@ -134,12 +135,12 @@ age_pooled <- clean.data.table %>%
 elix <- clean.data.table %>%
   dplyr::group_by(run, group) %>%
   dplyr::summarise(n = dplyr::n(),
-            elix_mean = mean(elix_index_mortality),
-            elix_sd = sd(elix_index_mortality),
-            elix_se = elix_sd / sqrt(n),
-            elix_median = median(elix_index_mortality),
-            elix_q1 = quantile(elix_index_mortality, 0.25),
-            elix_q3 = quantile(elix_index_mortality, 0.75))
+                   elix_mean = mean(elix_index_mortality),
+                   elix_sd = sd(elix_index_mortality),
+                   elix_se = elix_sd / sqrt(n),
+                   elix_median = median(elix_index_mortality),
+                   elix_q1 = quantile(elix_index_mortality, 0.25),
+                   elix_q3 = quantile(elix_index_mortality, 0.75))
 
 elix_pooled <- clean.data.table %>%
   dplyr::group_by(group) %>%
@@ -161,8 +162,8 @@ elix_indiv_pooled <- clean.data.table %>%
   dplyr::summarise(across(starts_with("elix"), ~ mean(. != 0, na.rm = TRUE))) %>% 
   select(-elix_index_mortality)
 
-write.csv(elix_indiv, "results/model_results/20250411/elix_table_1.csv")
-write.csv(elix_indiv, "results/model_results/20250411/pooled_elix_table_1.csv")
+# write.csv(elix_indiv, "results/model_results/20250411/elix_table_1.csv")
+# write.csv(elix_indiv, "results/model_results/20250411/pooled_elix_table_1.csv")
 
 
 # Time to infection (cases only)
@@ -214,12 +215,12 @@ LOS_pooled <- clean.data.table %>%
 matching.duration <- clean.data.table %>%
   dplyr::group_by(run, group) %>%
   dplyr::summarise(n = dplyr::n(),
-            matching_duration_mean = mean(matching_duration),
-            matching_duration_sd = sd(matching_duration),
-            matching_duration_se = matching_duration_sd / sqrt(n),
-            matching_duration_median = median(matching_duration),
-            matching_duration_q1 = quantile(matching_duration, 0.25),
-            matching_duration_q3 = quantile(matching_duration, 0.75))
+                   matching_duration_mean = mean(matching_duration),
+                   matching_duration_sd = sd(matching_duration),
+                   matching_duration_se = matching_duration_sd / sqrt(n),
+                   matching_duration_median = median(matching_duration),
+                   matching_duration_q1 = quantile(matching_duration, 0.25),
+                   matching_duration_q3 = quantile(matching_duration, 0.75))
 
 matching.duration_pooled <- clean.data.table %>%
   dplyr::group_by(group) %>%
@@ -293,9 +294,9 @@ abx <- clean.data.table %>%
   dplyr::left_join(sample_size) %>%
   dplyr::mutate(courses_group = (total / (sample_size/100))) %>%
   dplyr::mutate(abx = factor(abx, levels = c("total_courses_0_60", "penicillin_0_60", "anti_staph_beta_lactam_0_60", "extended_spectrum_penicillin_0_60", 
-                                      "cephalosporin_0_60", "extended_spectrum_cephalosporin_0_60", "carbapenem_0_60",
-                                      "glycopeptide_0_60", "fluoroquinolone_0_60", "macrolide_0_60", "lincosamide_0_60", 
-                                      "tetracycline_0_60", "sulfonamide_0_60", "anti_anaerobe_0_60", "anti_Cdiff_0_60")))
+                                             "cephalosporin_0_60", "extended_spectrum_cephalosporin_0_60", "carbapenem_0_60",
+                                             "glycopeptide_0_60", "fluoroquinolone_0_60", "macrolide_0_60", "lincosamide_0_60", 
+                                             "tetracycline_0_60", "sulfonamide_0_60", "anti_anaerobe_0_60", "anti_Cdiff_0_60")))
 
 abx_se <- clean.data.table %>%
   dplyr::select(run, group, group_index, PatientID, anti_anaerobe_0_60:tetracycline_0_60) %>%
@@ -333,9 +334,9 @@ abx_pooled <- clean.data.table %>%
   dplyr::left_join(sample_size_pooled) %>%
   dplyr::mutate(courses_group = (total / (sample_size/100))) %>%
   dplyr::mutate(abx = factor(abx, levels = c("total_courses_0_60", "penicillin_0_60", "anti_staph_beta_lactam_0_60", "extended_spectrum_penicillin_0_60", 
-                                      "cephalosporin_0_60", "extended_spectrum_cephalosporin_0_60", "carbapenem_0_60",
-                                      "glycopeptide_0_60", "fluoroquinolone_0_60", "macrolide_0_60", "lincosamide_0_60", 
-                                      "tetracycline_0_60", "sulfonamide_0_60", "anti_anaerobe_0_60", "anti_Cdiff_0_60")))
+                                             "cephalosporin_0_60", "extended_spectrum_cephalosporin_0_60", "carbapenem_0_60",
+                                             "glycopeptide_0_60", "fluoroquinolone_0_60", "macrolide_0_60", "lincosamide_0_60", 
+                                             "tetracycline_0_60", "sulfonamide_0_60", "anti_anaerobe_0_60", "anti_Cdiff_0_60")))
 
 abx_pooled_se <- clean.data.table %>%
   dplyr::select(run, group, group_index, PatientID, anti_anaerobe_0_60:tetracycline_0_60) %>%
@@ -354,6 +355,76 @@ abx_pooled_se <- clean.data.table %>%
 abx_pooled <- dplyr::left_join(abx_pooled,
                                abx_se,
                                by = c('group','abx'))
+
+# Prior microbial exposure
+microbe <- clean.data.table %>%
+  dplyr::select(run, group, group_index, PatientID, prior_C_diff:prior_VSE_faecium) %>%
+  dplyr::distinct() %>%
+  dplyr::rowwise() %>%
+  dplyr::mutate(total_microbe_0_60 = sum(dplyr::c_across(prior_C_diff:prior_VSE_faecium), na.rm = TRUE)) %>%
+  dplyr::ungroup() %>%
+  tidyr::pivot_longer(prior_C_diff:total_microbe_0_60, names_to = "microbe", values_to = "exposures") %>%
+  dplyr::filter(exposures > 0) %>%
+  dplyr::count(run, group, PatientID, microbe) %>%
+  dplyr::group_by(run, group, microbe) %>%
+  dplyr::mutate(total = sum(n)) %>%
+  dplyr::ungroup() %>%
+  dplyr::select(run, group, microbe, total) %>%
+  dplyr::distinct() %>%
+  dplyr::left_join(sample_size) %>%
+  dplyr::mutate(exposures_group = (total / (sample_size/100))) %>%
+  dplyr::mutate(microbe = factor(microbe, levels = c("total_microbe_0_60", names(clean.data.table %>% dplyr::select(prior_C_diff:prior_VSE_faecium)))))
+
+microbe_se <- clean.data.table %>%
+  dplyr::select(run, group, group_index, PatientID, prior_C_diff:prior_VSE_faecium) %>%
+  dplyr::distinct() %>%
+  dplyr::rowwise() %>%
+  dplyr::mutate(total_microbe_0_60 = sum(dplyr::c_across(prior_C_diff:prior_VSE_faecium), na.rm = TRUE)) %>%
+  dplyr::ungroup() %>%
+  tidyr::pivot_longer(prior_C_diff:total_microbe_0_60, names_to = "microbe", values_to = "exposures") %>%
+  dplyr::group_by(run, group, microbe) %>%
+  dplyr::summarize(
+    se_exposures = sd(exposures, na.rm = TRUE) / sqrt(dplyr::n()),
+    .groups = "drop"
+  ) %>%
+  dplyr::mutate(se_exposures = se_exposures * 100)
+
+microbe <- dplyr::left_join(microbe, microbe_se, by = c('run', 'group', 'microbe'))
+
+microbe_pooled <- clean.data.table %>%
+  dplyr::select(run, group, group_index, PatientID, prior_C_diff:prior_VSE_faecium) %>%
+  dplyr::distinct() %>%
+  dplyr::rowwise() %>%
+  dplyr::mutate(total_microbe_0_60 = sum(dplyr::c_across(prior_C_diff:prior_VSE_faecium), na.rm = TRUE)) %>%
+  dplyr::ungroup() %>%
+  tidyr::pivot_longer(prior_C_diff:total_microbe_0_60, names_to = "microbe", values_to = "exposures") %>%
+  dplyr::filter(exposures > 0) %>%
+  dplyr::count(run, group, PatientID, microbe) %>%
+  dplyr::group_by(group, microbe) %>%
+  dplyr::mutate(total = sum(n)) %>%
+  dplyr::ungroup() %>%
+  dplyr::select(group, microbe, total) %>%
+  dplyr::distinct() %>%
+  dplyr::left_join(sample_size_pooled) %>%
+  dplyr::mutate(exposures_group = (total / (sample_size/100))) %>%
+  dplyr::mutate(microbe = factor(microbe, levels = c("total_microbe_0_60", names(clean.data.table %>% dplyr::select(prior_C_diff:prior_VSE_faecium)))))
+
+microbe_pooled_se <- clean.data.table %>%
+  dplyr::select(run, group, group_index, PatientID, prior_C_diff:prior_VSE_faecium) %>%
+  dplyr::distinct() %>%
+  dplyr::rowwise() %>%
+  dplyr::mutate(total_microbe_0_60 = sum(dplyr::c_across(prior_C_diff:prior_VSE_faecium), na.rm = TRUE)) %>%
+  dplyr::ungroup() %>%
+  tidyr::pivot_longer(prior_C_diff:total_microbe_0_60, names_to = "microbe", values_to = "exposures") %>%
+  dplyr::group_by(group, microbe) %>%
+  dplyr::summarize(
+    se_exposures = sd(exposures, na.rm = TRUE) / sqrt(dplyr::n()),
+    .groups = "drop"
+  ) %>%
+  dplyr::mutate(se_exposures = se_exposures * 100)
+
+microbe_pooled <- dplyr::left_join(microbe_pooled, microbe_pooled_se, by = c('group', 'microbe'))
+
 
 # Combine into a single table
 age.temp <- age %>% 
@@ -390,6 +461,12 @@ abx.temp <- abx %>%
   dplyr::mutate(across(ends_with("0_60"), ~tidyr::replace_na(., 0))) %>%
   dplyr::mutate(across(ends_with("0_60"), ~round(., 1)))
 
+microbe.temp <- microbe %>%
+  dplyr::select(run, group, microbe, exposures_group) %>%
+  tidyr::pivot_wider(names_from = microbe, values_from = exposures_group) %>%
+  dplyr::mutate(across(contains("prior_"), ~tidyr::replace_na(., 0))) %>%
+  dplyr::mutate(across(contains("prior_"), ~round(., 1)))
+
 table1 <- sample_size %>%
   dplyr::left_join(age.temp) %>%
   dplyr::left_join(sex.temp) %>%
@@ -398,7 +475,9 @@ table1 <- sample_size %>%
   dplyr::left_join(LOS.temp) %>%
   dplyr::left_join(matching.duration.temp) %>%
   dplyr::left_join(time.to.infxn.temp) %>%
-  dplyr::left_join(abx.temp) 
+  dplyr::left_join(abx.temp) %>%
+  dplyr::left_join(microbe.temp)
+  
 
 # Save table 1
 readr::write_csv(table1, file = "results/model_results/20250411/table1.csv")
@@ -593,8 +672,8 @@ clr.prepped <- clr.results %>%
   dplyr::select(match:variable, coef_raw, lower_CI_raw, upper_CI_raw, SE_coef_raw, pval_raw, sig_flag) %>%
   dplyr::distinct() %>%
   dplyr::mutate(perc_coef_rounded = round((coef_raw - 1)*100, 1),
-         perc_LCI_rounded = round((lower_CI_raw - 1)*100, 1),
-         perc_UCI_rounded = round((upper_CI_raw - 1)*100, 1)) %>%
+                perc_LCI_rounded = round((lower_CI_raw - 1)*100, 1),
+                perc_UCI_rounded = round((upper_CI_raw - 1)*100, 1)) %>%
   dplyr::mutate(direction = ifelse(coef_raw > 1, "pos", "neg")) %>%
   dplyr::mutate(org_group = dplyr::case_when(
     target %in% c("C_diff", "DS_E_cloacae", "DS_E_coli", "DS_K_oxytoca", "DS_K_pneumoniae", 
@@ -605,11 +684,11 @@ clr.prepped <- clr.results %>%
     target %in% c("DR_P_aeruginosa", "DS_P_aeruginosa") ~ "environmentals"
   )) %>%
   dplyr::mutate(target = factor(target, levels = c("DS_E_coli", "ESBL_E_coli", "DS_K_pneumoniae", "ESBL_K_pneumoniae", 
-                                            "DS_E_cloacae", "ESBL_E_cloacae", "C_diff", "VSE_faecalis", "VRE_faecium", 
-                                            "VSE_faecium", "MRSA", "MSSA", "DR_P_aeruginosa", "DS_P_aeruginosa"
+                                                   "DS_E_cloacae", "ESBL_E_cloacae", "C_diff", "VSE_faecalis", "VRE_faecium", 
+                                                   "VSE_faecium", "MRSA", "MSSA", "DR_P_aeruginosa", "DS_P_aeruginosa"
   ))) %>%
   dplyr::mutate(variable = factor(variable, levels = c("DS_Entero_cp", "ESBL_cp", "CDiff_cp", "VSE_cp", "VRE_cp", 
-                                                "MSSA_cp", "MRSA_cp", "DS_PsA_cp", "DR_PsA_cp")))
+                                                       "MSSA_cp", "MRSA_cp", "DS_PsA_cp", "DR_PsA_cp")))
 
 
 # Function to filter CLR data for target and CP sets
@@ -663,7 +742,7 @@ clr.cp.results <- dplyr::bind_rows(cognate.enteric, cognate.skin, cognate.enviro
                                    noncognate.enteric.env, noncognate.skin.enteric, noncognate.skin.env,
                                    noncognate.env.enteric, noncognate.env.skin) %>%
   dplyr::select(match:variable, comparison, coef = perc_coef_rounded, lower_CI = perc_LCI_rounded, upper_CI = perc_UCI_rounded,
-         pval_raw:sig_flag)
+                pval_raw:sig_flag)
 
 # Save clean CLR results
 readr::write_csv(clr.cp.results, file = "results/model_results/20250411/clr_results_clean.csv")
@@ -737,8 +816,8 @@ cp <- clean.data.table %>%
   dplyr::distinct() %>%
   tidyr::pivot_longer(DS_Entero_cp:DR_PsA_cp, names_to = "cp_type", values_to = "cp_val") %>%
   dplyr::mutate(cp_type = factor(cp_type, levels = c("DS_Entero_cp", "ESBL_cp", "VSE_cp", 
-                                              "VRE_cp", "CDiff_cp", "MSSA_cp", "MRSA_cp", "DS_PsA_cp",
-                                              "DR_PsA_cp"))) %>%
+                                                     "VRE_cp", "CDiff_cp", "MSSA_cp", "MRSA_cp", "DS_PsA_cp",
+                                                     "DR_PsA_cp"))) %>%
   dplyr::mutate(percentile = percent_rank(cp_val))
 
 # Compare CP between drug-susceptible and drug-resistant organism pairs (t-tests)
@@ -799,10 +878,10 @@ t.test(psa.ds.cp$cp_val, psa.dr.cp$cp_val)
 cp_percentile <- cp %>%
   dplyr::group_by(cp_type) %>%
   dplyr::mutate(overall_mean = mean(cp_val), 
-         overall_median = median(cp_val),
-         overall_se = (sd(cp_val) / dplyr::n())) %>%
+                overall_median = median(cp_val),
+                overall_se = (sd(cp_val) / dplyr::n())) %>%
   dplyr::mutate(mean_percentile = mean(cp_val <= overall_mean),
-         median_percentile = 0.5) %>%
+                median_percentile = 0.5) %>%
   dplyr::mutate(org = dplyr::case_when(
     cp_type %in% c("DS_Entero_cp", "ESBL_cp") ~ "Enterobacterales",
     cp_type %in% c("VSE_cp", "VRE_cp") ~ "Enterococcus",
@@ -960,7 +1039,7 @@ for (r in corr_plot_cohort) {
     ggsave(filename = paste0("/data/tide/projects/ho_infxn_ml/results/figures_tables/20250411/cp_correlation_plots/", r, "_", cp_col, ".pdf"), plot = p, width = 6, height = 4)
     
   }
-
+  
 }
 
 cdf_data <- cc_final %>%

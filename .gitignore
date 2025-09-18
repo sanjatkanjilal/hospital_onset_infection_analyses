@@ -9,7 +9,13 @@ archive_folder/
 *.exe
 *.o
 *.so
-ho_infxn_clean_code.Rproj
+*.Rproj
+.RData
+.Rhistory
+
+# Data #
+############
+data/
 
 # Packages #
 ############

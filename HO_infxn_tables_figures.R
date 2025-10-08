@@ -44,10 +44,8 @@ mainDir <- "/data/tide/projects/ho_infxn_ml/"
 setwd(file.path(mainDir))
 
 #### IMPORT DATASETS ####
-# cc_final <- readr::read_csv("clean_data/20250411/final_dataset_for_models_20250411.csv")
-# cc_final <- read.csv('/data/tide/projects/ho_infxn_ml/clean_data/20250411/final_dataset_for_models_elix_20250411.csv')
 cc_final <- read.csv('clean_data/HO_infxn_environmental_analysis.csv')
-clr.results <- readr::read_csv("results/model_results/20250411/clogit_coefficients.csv")
+clr.results <- readr::read_csv("results/model_results/clogit_coefficients.csv")
 
 # Filter for result of colonization pressure analysis and set factor leve.s
 clean.data.table <- cc_final %>%
@@ -161,8 +159,8 @@ elix_indiv_pooled <- clean.data.table %>%
   dplyr::summarise(across(starts_with("elix"), ~ mean(. != 0, na.rm = TRUE))) %>% 
   select(-elix_index_mortality)
 
-write.csv(elix_indiv, "results/model_results/20250411/elix_table_1.csv")
-write.csv(elix_indiv, "results/model_results/20250411/pooled_elix_table_1.csv")
+write.csv(elix_indiv, "results/model_results/elix_table_1.csv")
+write.csv(elix_indiv, "results/model_results/pooled_elix_table_1.csv")
 
 
 # Time to infection (cases only)
@@ -401,7 +399,7 @@ table1 <- sample_size %>%
   dplyr::left_join(abx.temp) 
 
 # Save table 1
-readr::write_csv(table1, file = "results/model_results/20250411/table1.csv")
+readr::write_csv(table1, file = "results/model_results/table1.csv")
 
 rm(age.temp, sex.temp, surgery.temp, elix.temp, LOS.temp, 
    matching.duration.temp, time.to.infxn.temp, abx.temp)
@@ -666,7 +664,7 @@ clr.cp.results <- dplyr::bind_rows(cognate.enteric, cognate.skin, cognate.enviro
          pval_raw:sig_flag)
 
 # Save clean CLR results
-readr::write_csv(clr.cp.results, file = "results/model_results/20250411/clr_results_clean.csv")
+readr::write_csv(clr.cp.results, file = "results/model_results/clr_results_clean.csv")
 
 # Clean up
 rm(orgs_to_keep, target.cp.data, enteric.cp, enteric.target, skin.cp, environmental.cp, 
@@ -845,7 +843,7 @@ shap_value_matrix = data.frame()
 elix_shap_matrix = data.frame()
 for (run_name in all_runs){
   for (fold in c(1,2,3,4,5)){
-    model = xgb.load(paste0('results/model_results/20250411/xgb/model_checkpoints/environmental_', run_name ,'/fold_',fold,'.model'))
+    model = xgb.load(paste0('results/model_results/xgb/model_checkpoints/environmental_', run_name ,'/fold_',fold,'.model'))
     
     dat.run <- cc_final %>% filter(run == run_name & match == 'environmental')
     dat.run <- dat.run %>% select(elix_index_mortality, CDiff_cp:DR_PsA_cp)
@@ -898,7 +896,7 @@ for (run_name in all_runs){
   
   plot <- shap.plot.summary(shap_long)
   
-  ggsave(filename = paste0('results/model_results/20250411/xgb/shap_plots/environmental_', run_name,'_shap_summary.pdf'), 
+  ggsave(filename = paste0('results/model_results/xgb/shap_plots/environmental_', run_name,'_shap_summary.pdf'), 
          plot = plot, 
          width = 8, 
          height = 6)
@@ -915,8 +913,8 @@ order_list <- c("DS_Entero_cp","ESBL_cp","VSE_cp","VRE_cp","CDiff_cp",
 shap_value_matrix$variable <- factor(shap_value_matrix$variable, levels = order_list)
 shap_value_matrix_ordered <- shap_value_matrix[order(shap_value_matrix$variable), ]
 
-write.csv(x = shap_value_matrix, file = 'results/model_results/20250411/xgb/shap_plots/shap_values.csv',row.names = FALSE)
-ggsave(filename = paste0('results/model_results/20250411/xgb/shap_plots/elixhauser_shap_summary.pdf'), 
+write.csv(x = shap_value_matrix, file = 'results/model_results/xgb/shap_plots/shap_values.csv',row.names = FALSE)
+ggsave(filename = paste0('results/model_results/xgb/shap_plots/elixhauser_shap_summary.pdf'), 
        plot = elix_plot, 
        width = 8, 
        height = 6)
@@ -957,7 +955,7 @@ for (r in corr_plot_cohort) {
       theme_minimal() +
       theme(plot.title = element_text(hjust = 0.5))
     
-    ggsave(filename = paste0("/data/tide/projects/ho_infxn_ml/results/figures_tables/20250411/cp_correlation_plots/", r, "_", cp_col, ".pdf"), plot = p, width = 6, height = 4)
+    ggsave(filename = paste0("/data/tide/projects/ho_infxn_ml/results/figures_tables/cp_correlation_plots/", r, "_", cp_col, ".pdf"), plot = p, width = 6, height = 4)
     
   }
 
@@ -997,7 +995,7 @@ p <- ggplot(cdf_data, aes(x = x, y = y, color = group)) +
 
 # Save full grid plot (adjust size as needed)
 ggsave(
-  filename = "/data/tide/projects/ho_infxn_ml/results/figures_tables/20250411/cp_correlation_plots/all_facet_grid_plot.pdf",
+  filename = "/data/tide/projects/ho_infxn_ml/results/figures_tables/cp_correlation_plots/all_facet_grid_plot.pdf",
   plot = p,
   width = 16, height = 10
 )

@@ -43,8 +43,7 @@
 #### SET ENVIRONMENT VARIABLES / IMPORT FUNCTIONS ####
 
 # Import the functions for the pipeline
-# source("/PHShome/sk726/Scripts/ml-hc-class/prior_patient_infection/HO_infxn_functions.R")
-source("~/colonization-pressure_HAI/HO_infxn_functions.R")
+source("HO_infxn_functions.R")
 # conflicted::conflicts_prefer(tidyr::replace_na)
 # conflicted::conflicts_prefer(dplyr::mutate)
 # conflicted::conflicts_prefer(dplyr::select)

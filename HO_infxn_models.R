@@ -44,7 +44,7 @@ mainDir <- "/Users/zimingwei/GitHub/nosocomial-acquisition_colonization-pressure
 setwd(file.path(mainDir))
 
 #### IMPORT DATASETS ####
-cc_final <- readr::read_csv("clean_data/20250603_SensitivityAnalysis/final_dataset_for_models_20250603_SensitivityAnalysis.csv")
+cc_final <- readr::read_csv("clean_data/HO_infxn_environmental_analysis.csv")
 
 #### SET UP MODELS ####
 
@@ -155,7 +155,7 @@ clr.final <- clr %>%
          upper_CI_raw = upper_CI, SE_coef_raw = SE_coef, pval_raw = pval)
 
 # Save file
-readr::write_csv(clr.final, file = paste0("results/model_results/20250603_SensitivityAnalysis/clogit_coefficients.csv"))
+readr::write_csv(clr.final, file = paste0("results/model_results/add_dept/clogit_coefficients.csv"))
 
 #### XGBOOST MODELS ####
 

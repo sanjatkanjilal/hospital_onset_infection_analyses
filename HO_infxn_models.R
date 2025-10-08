@@ -155,7 +155,7 @@ clr.final <- clr %>%
          upper_CI_raw = upper_CI, SE_coef_raw = SE_coef, pval_raw = pval)
 
 # Save file
-readr::write_csv(clr.final, file = paste0("results/model_results/add_dept/clogit_coefficients.csv"))
+readr::write_csv(clr.final, file = paste0("results/model_results/clogit_coefficients.csv"))
 
 #### XGBOOST MODELS ####
 
@@ -241,7 +241,7 @@ run_xgboost_environmental <- function(y){
     importance_list[[i]] <- xgb.importance(model = xgb_model)
     
     # Save the models
-    output_dir = paste0("results/model_results/","20250603_SensitivityAnalysis","/xgb/model_checkpoints/environmental_", y)
+    output_dir = paste0("results/model_results/xgb/model_checkpoints/environmental_", y)
     if (!dir.exists(output_dir)){
       dir.create(output_dir)
     } 
@@ -317,8 +317,8 @@ for (rubric in matching_rubric){
     for (target in remaining_targets){
       cat(paste0("Running environmental match models for target: ", target), "\n\n")
       run_xgboost_environmental(target)
-      write.csv(env_dat_with_pred, paste0("results/model_results/","20250603_SensitivityAnalysis","/xgb/environmental_match_predictions.csv"), row.names = FALSE)
-      write.csv(xgboost_metrics, paste0("results/model_results/","20250603_SensitivityAnalysis","/xgb/xgboost_metrics.csv"), row.names = FALSE)
+      write.csv(env_dat_with_pred, paste0("results/model_results/xgb/environmental_match_predictions.csv"), row.names = FALSE)
+      write.csv(xgboost_metrics, paste0("results/model_results/xgb/xgboost_metrics.csv"), row.names = FALSE)
     }
   }
 }

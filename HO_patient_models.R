@@ -47,7 +47,7 @@ setwd(file.path(mainDir))
 cc_final <- readr::read_csv("clean_data/HO_infxn_patient_analysis.csv")
 cc_final$age[cc_final$age == '>90'] <- '90'
 cc_final$age <- as.numeric(cc_final$age)
-cc_final <- cc_final %>% dplyr::filter(sex!='Other')
+cc_final <- cc_final %>% dplyr::filter(sex!='Other') %>% dplyr::filter(age<=90)
 
 #### SET UP MODELS ####
 
@@ -66,132 +66,6 @@ clogit_coefficients <- data.frame()
 #   as.data.frame(.)
 
 # Loop through all organisms
-## Raw Predictions
-clr <- do.call(dplyr::bind_rows,
-               lapply(levels(factor(matching_rubric)), function(x) 
-               {
-                 dat.match <- cc_final %>% dplyr::filter(match == x)
-                 
-                 if(x == "environmental")
-                 {
-                   do.call(dplyr::bind_rows,
-                           lapply(levels(factor(dat.match$run)), function(y) 
-                           {
-                             dat.run <- dat.match %>% 
-                               dplyr::filter(run == y)
-                             
-                             prior_path_target <- paste0("prior_", y)
-                             print(paste("Environmental match regression for", y))
-                             dat.run <- dat.run %>% dplyr::select(group_binary, group_index, elix_index_mortality, CDiff_cp:DR_PsA_cp)
-                             dat.run <- dat.run %>% dplyr::select(where(~dplyr::n_distinct(.) > 1))
-                             form1 = as.formula(paste("group_binary ~", paste(names(dat.run)[3:ncol(dat.run)], collapse = "+"), paste("+ strata(group_index)")))
-                             fit.clr <- clogit(form1, data = dat.run)
-                             summary_logistic <- summary(fit.clr)
-                             coef_clogit <- dplyr::bind_cols(summary_logistic[["conf.int"]][, c(1,3,4)], 
-                                                             summary_logistic[["coefficients"]][,c(3,5)]) %>%
-                               dplyr::mutate(match = x,
-                                             target = y,
-                                             variable = rownames(summary_logistic[["coefficients"]])) %>%
-                               dplyr::mutate(variable = ifelse(variable == "dat.run[, prior_path_target]", prior_path_target, variable))
-                             rownames(coef_clogit) <- NULL
-                             clogit_coefficients <- rbind(clogit_coefficients, coef_clogit)
-                             
-                           }))
-                 } else {
-                   do.call(dplyr::bind_rows,
-                           lapply(levels(factor(dat.match$run)), function(y) 
-                           {
-                             dat.run <- dat.match %>% 
-                               dplyr::filter(run == y)
-                             print(paste("Patient match regression for", y))
-                             prior_path_target <- paste0("prior_", y)
-                             dat.run <- dat.run %>% dplyr::select(group_binary, group_index, 
-                                                                  age, sex, elix_index_mortality, any_surgery, anti_anaerobe_0_60:tetracycline_0_60)
-                             dat.run <- dat.run %>% dplyr::select(where(~dplyr::n_distinct(.) > 1))
-                             form1 = as.formula(paste("group_binary ~", paste(names(dat.run)[3:ncol(dat.run)], collapse = "+"), paste("+ strata(group_index)")))
-                             fit.clr <- clogit(form1, data = dat.run)
-                             summary_logistic <- summary(fit.clr)
-                             coef_clogit <- dplyr::bind_cols(summary_logistic[["conf.int"]][, c(1,3,4)], 
-                                                             summary_logistic[["coefficients"]][,c(3,5)]) %>%
-                               dplyr::mutate(match = x,
-                                             target = y,
-                                             variable = rownames(summary_logistic[["coefficients"]])) %>%
-                               dplyr::mutate(variable = ifelse(variable == "test1[, prior_path_target]", prior_path_target, variable))
-                             rownames(coef_clogit) <- NULL
-                             clogit_coefficients <- rbind(clogit_coefficients, coef_clogit)
-                           }))
-                 }
-               }))
-
-# Format results
-clr.final <- clr %>%
-  dplyr::select(match:variable, coef = `exp(coef)`, lower_CI = `lower .95`, upper_CI = `upper .95`, SE_coef = `se(coef)`, pval = `Pr(>|z|)`) %>%
-  dplyr::mutate(coef_clean = dplyr::case_when(
-    coef < 6 ~ as.character(round(coef, 2)),
-    coef > 6 & coef < 10 ~ "6 - 10",
-    coef > 10  ~ ">10",
-    .default = NULL)) %>%
-  dplyr::mutate(lower_CI_clean = dplyr::case_when(
-    lower_CI < 6 ~ as.character(round(lower_CI, 2)),
-    lower_CI > 6 & lower_CI < 10 ~ "6 - 10",
-    lower_CI > 10 ~ ">10",
-    .default = NULL)) %>%
-  dplyr:: mutate(upper_CI_clean = dplyr::case_when(
-    upper_CI < 6 ~ as.character(round(upper_CI, 2)),
-    upper_CI > 6 & upper_CI < 10 ~ "6 - 10",
-    upper_CI > 10 ~ ">10",
-    .default = NULL)) %>%
-  dplyr::mutate(SE_coef_clean = dplyr::case_when(
-    SE_coef < 6 ~ as.character(round(SE_coef, 2)),
-    SE_coef > 6 & SE_coef < 10 ~ "6 - 10",
-    SE_coef > 10 ~ ">10",
-    .default = NULL)) %>%
-  dplyr::mutate(pval_clean = dplyr::case_when(
-    pval > 0.05 ~ "p > 0.05",
-    pval < 0.05 & pval > 0.01 ~ "p < 0.05",
-    pval < 0.01 & pval > 0.001 ~ "p < 0.01",
-    pval < 0.001 ~ "p < 0.001",
-    .default = NULL)) %>%
-  dplyr::mutate(sig_flag = ifelse(pval < 0.05, "*", NA)) %>%
-  dplyr::mutate(across(ends_with("clean"), ~ ifelse(. %in% c("1", "0"), paste0(., ".00"), .))) %>%
-  dplyr::select(match:variable, coef = coef_clean, lower_CI = lower_CI_clean, upper_CI = upper_CI_clean, 
-                SE_coef = SE_coef_clean, pval = pval_clean, sig_flag, coef_raw = coef, lower_CI_raw = lower_CI, 
-                upper_CI_raw = upper_CI, SE_coef_raw = SE_coef, pval_raw = pval)
-
-# Define the manuscript-based order
-manuscript_order <- c(
-  "DS_E_coli", 
-  "ESBL_E_coli", 
-  "DS_K_pneumoniae", 
-  "ESBL_K_pneumoniae",
-  "VSE_faecalis",
-  "VRE_faecium",
-  "C_diff",
-  "MSSA", 
-  "MRSA", 
-  "DS_P_aeruginosa", 
-  "DR_P_aeruginosa"
-)
-
-# Step 2: Drop any existing factor status to avoid wrong ordering
-clr.final <- clr.final %>%
-  mutate(target = as.character(target))  # make sure we're starting clean
-
-# Step 3: Create a new full order with non-manuscript entries appended
-final_order <- c(
-  manuscript_order,
-  setdiff(unique(clr.final$target), manuscript_order)
-)
-
-# Step 4: Enforce factor levels and sort
-clr.final <- clr.final %>%
-  mutate(target = factor(target, levels = final_order)) %>%
-  arrange(target)
-
-# Save file
-readr::write_csv(clr.final, file = paste0("results/model_results/raw_clogit_coefficients.csv"))
-
-# Cleaned Model
 clean_clr <- do.call(dplyr::bind_rows,
                lapply(levels(factor(matching_rubric)), function(x) {
                  dat.match <- cc_final %>% dplyr::filter(match == x)
@@ -281,6 +155,25 @@ clean_clr.final <- clean_clr %>%
                 SE_coef = SE_coef_clean, pval = pval_clean, sig_flag, coef_raw = coef, lower_CI_raw = lower_CI, 
                 upper_CI_raw = upper_CI, SE_coef_raw = SE_coef, pval_raw = pval)
 
+manuscript_order <- c(
+  "DS_E_coli", 
+  "ESBL_E_coli", 
+  "DS_K_pneumoniae", 
+  "ESBL_K_pneumoniae",
+  "VSE_faecalis",
+  "VRE_faecium",
+  "C_diff",
+  "MSSA", 
+  "MRSA", 
+  "DS_P_aeruginosa", 
+  "DR_P_aeruginosa"
+)
+
+final_order <- c(
+  manuscript_order,
+  setdiff(unique(clean_clr.final$target), manuscript_order)
+)
+
 clean_clr.final <- clean_clr.final %>%
   mutate(target = as.character(target))  # make sure we're starting clean
 
@@ -288,7 +181,7 @@ clean_clr.final <- clean_clr.final %>%
   mutate(target = factor(target, levels = final_order)) %>%
   arrange(target)
 
-readr::write_csv(clean_clr.final, file = paste0("results/model_results/cleaned_clogit_coefficients.csv"))
+readr::write_csv(clean_clr.final, file = paste0("results/model_results/patient_analysis_cleaned_clogit_coefficients.csv"))
 
 #### XGBOOST MODELS ####
 

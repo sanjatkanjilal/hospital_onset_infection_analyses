@@ -927,8 +927,8 @@ add_prior_pathogens <- function(room_dat, micro, pathogen_hierarchy, adt.micro.r
   diff_days_transform <- prior_pathogen.prelim.dedup %>% 
     dplyr::select(dept_room, hospitalization_id, diff_days) %>%
     dplyr::mutate(diff_days_transform = exp(-0.01 * (diff_days))) %>%
-    dplyr::mutate(diff_days_transform = round(diff_days_transform, 2)) %>%
-    dplyr::mutate(diff_days_transform = diff_days_transform * 5) # Additional up-weighting of prior occupant above that of other ward occupants
+    dplyr::mutate(diff_days_transform = round(diff_days_transform, 2)) # %>%
+    # dplyr::mutate(diff_days_transform = diff_days_transform * 5) # Additional up-weighting of prior occupant above that of other ward occupants
 
   # Spread transformed data
   prior_pathogen.prelim.transform <- prior_pathogen.prelim.dedup %>%

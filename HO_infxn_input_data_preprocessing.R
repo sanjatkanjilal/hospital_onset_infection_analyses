@@ -143,6 +143,6 @@ rm(grouping_function, micro_dedup, initial_abx_clean, process_ip_abx_features, c
    calculate_abx_op_last_date, abx_courses, enc_processing, path_cat_hierarchy, admt.mapped, first_eligible_rooms, micro_prep, 
    room_dat_eligible_trimmed, adt_micro_join, time_to_infxn, drop_old_micro, remove_treated_patients, drop_prev_enc, 
    adt_micro_hierarchy, potential_cases, after_first_room, flag_prior_infxn, generate_controls, add_demographics, add_abx, 
-   final_abx_clean, add_comorbidities, add_cpt, add_admit.source, add_prior_pathogens, calculate_CP_score, 
+   final_abx_clean, add_comorbidities, add_cpt, add_admit.source, calculate_CP_score, 
    calculate_and_add_cp_scores_parallel, adt_micro_initial_prep, generate_unmatched_data, generate.unmatched.dataset, environmental.matching_process, 
    patient.matching_process)

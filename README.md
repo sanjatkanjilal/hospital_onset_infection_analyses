@@ -19,7 +19,7 @@ Prior studies have shown a direct association between CP and HAI(Bonten 1998,Aja
 ### Scripts
 1. `HO_infxn_functions.R`
 
-    **Description:** Functions for pre-processing and cohort building for colonization pressure / hospital-onset infection analysis
+    **Description:** Functions for pre-processing and cohort building for environmental-level and patient-level analyses
     
     **Input Files**
     - None
@@ -29,7 +29,7 @@ Prior studies have shown a direct association between CP and HAI(Bonten 1998,Aja
 
 2. `HO_infxn_C_Diff_micro_query.R`
 
-   **Description:** Script to pull any patients who had a C.difficile test performed
+   **Description:** Script to pull all patients who had a C. difficile testing performed (only necessary if this data is separate from other microbiology data)
 
     **Input Files**
     - `edw_cdiff.csv`
@@ -40,7 +40,7 @@ Prior studies have shown a direct association between CP and HAI(Bonten 1998,Aja
 
 3. `HO_infxn_micro_prep.R`
 
-    **Description:** Script to process micro data for HO-infection study
+    **Description:** Script to process raw microbiology data
     
     **Input Files**
     - `micro_raw.csv`
@@ -51,7 +51,7 @@ Prior studies have shown a direct association between CP and HAI(Bonten 1998,Aja
 
 4. `HO_infxn_input_data_preprocessing.R`
 
-    **Description:** Input data pre-processing for colonization pressure / hospital-onset infection analysis
+    **Description:** Raw clinical metadata pre-processing 
 
     **Dependent Scripts**
     - `HO_infxn_functions.R`
@@ -74,7 +74,7 @@ Prior studies have shown a direct association between CP and HAI(Bonten 1998,Aja
 
 5. `HO_infxn_build_unmatched_cohorts.R`
 
-    **Description:** Build unmatched cohorts for colonization pressure / hospital-onset infection analysis
+    **Description:** Build unmatched target pathogen cohorts 
 
     **Dependent Scripts**
     - `HO_infxn_functions.R`
@@ -94,7 +94,7 @@ Prior studies have shown a direct association between CP and HAI(Bonten 1998,Aja
 
 6. `HO_infxn_add_features.R`
 
-    **Description:** Add features to cohorts in colonization pressure / hospital-onset infection analysis
+    **Description:** Add features to each target pathogen cohort
 
     **Dependent Scripts**
     - `HO_infxn_functions.R`
@@ -119,7 +119,6 @@ Prior studies have shown a direct association between CP and HAI(Bonten 1998,Aja
     - `elix_clean.csv`
     - `cpt_clean.csv`
     - `admt_clean.csv`
-    - `prior_occupant.csv`
     - `col_pressure.csv`
     - `path_cat_table_matching.csv`
     - `unmatched_case_controls_features.csv`
@@ -127,7 +126,7 @@ Prior studies have shown a direct association between CP and HAI(Bonten 1998,Aja
 
 7. `HO_infxn_build_matched_cohorts.R`
 
-    **Description:** Matches cases to controls for colonization pressure / hospital-onset infection analysis
+    **Description:** Match cases to controls for each target pathogen cohort for environmental-level and patient-level analyses
 
     **Dependent Scripts**
     - `HO_infxn_functions.R`
@@ -142,7 +141,7 @@ Prior studies have shown a direct association between CP and HAI(Bonten 1998,Aja
 
 8. `HO_infxn_models.R`
 
-    **Description:** Models for colonization pressure / hospital-onset infection analysis
+    **Description:** Models for estimating impact of colonization pressure and prior antibiotic exposure on in-hospital acquisition of target pathogen
 
     **Input Files**
     - `final_dataset_for_models.csv`
@@ -153,7 +152,7 @@ Prior studies have shown a direct association between CP and HAI(Bonten 1998,Aja
 
 9. `HO_infxn_tables_figures.R`
 
-    **Description:** Data visualizations for colonization pressure / hospital-onset infection analysis
+    **Description:** Data visualizations 
 
     **Input Files**
     - `final_dataset_for_models.csv`
@@ -165,13 +164,12 @@ Prior studies have shown a direct association between CP and HAI(Bonten 1998,Aja
 ### Data Files
 1. `final_dataset_for_models.csv`
 
-    **Description:** The final data ready for running Conditional Logistic Regression (CLR) and XGBoost.
+    **Description:** The final data ready for running conditional logistic regression (CLR) and XGBoost models for environmental-level and patient-level analyses
 
     **Key Columns:**
     - `run` : The name of organism infection for the sample.
     - `group` : Whether the sample is classified as control or case in the matched study.
     - `[abx]_0_60` : Prior number of *abx* courses used in the prior 60 days.
-    - `prior_[organism]` : Binary indication of whether the sample has been exposed to *organism* in the prior 365 days.
     - `[organism]_cp` : Calculated *organism* colonization pressure for the sample.
     - `elix_index_mortality` : Calculated elixhauser index for the sample.
 
@@ -180,6 +178,7 @@ Prior studies have shown a direct association between CP and HAI(Bonten 1998,Aja
 To ensure compliance with HIPAA guidelines and protect patient privacy:
 - Patient IDs are anonymized, and all identifiable information is removed.
 - Patients with Age > 90 are removed from analysis to enture patient privacy.
+- Hospital units are given an anonymous random number
 - Hospital Admission and Discharge dates are anonymized as random dates and time while maintaining relative time for the same patient.
 
 ---
@@ -198,12 +197,12 @@ This study was approved by the Institutional Review Board (IRB) of Massachusetts
 
 ---
 ## Citation
-When using the code and dataset, please cite: Sagers L, Wei Z, McKenna C, Chan C, Agan AA, Pak R, et al. Hospital unit colonization pressure and nosocomial acquisition of drug susceptible and drug resistant pathogens. 
-
-
+When using the code and dataset, please cite: Sagers L, Wei Z, McKenna C, Chan C, Agan AA, Pak TR, Rhee C, Klompas M, Kanjilal S. 2025. Hospital unit colonization pressure and nosocomial acquisition of drug susceptible and drug resistant pathogens. medRxiv 2025.06.11.25329430. doi:10.1101/2025.06.11.25329430
+  
 ## Contact
-For quesetions, clarifications, or further support, please contact:
+For questions, clarifications, or further support, please contact:
 
 **Sanjat Kanjilal, MD, MPH**
-Harvard Medical School and Harvard Pilgrim Healthcare Institute
-SKanjilal@bwh.harvard.edu
+Department of Medical Microbiology and Infection Prevention
+Amsterdam University Medical Center
+s.kanjilal@amsterdamumc.nl

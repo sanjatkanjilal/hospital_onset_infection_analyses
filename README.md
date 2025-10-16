@@ -19,7 +19,7 @@ Prior studies have shown a direct association between CP and HAI(Bonten 1998,Aja
 ### Scripts
 1. `HO_infxn_functions.R`
 
-    **Description:** Functions for pre-processing and cohort building for environmental-level and patient-level analyses
+    **Description:** Functions for pre-processing and cohort building for environmental and patient analyses
     
     **Input Files**
     - None
@@ -126,7 +126,7 @@ Prior studies have shown a direct association between CP and HAI(Bonten 1998,Aja
 
 7. `HO_infxn_build_matched_cohorts.R`
 
-    **Description:** Match cases to controls for each target pathogen cohort for environmental-level and patient-level analyses
+    **Description:** Match cases to controls for each target pathogen cohort for environmental and patient analyses
 
     **Dependent Scripts**
     - `HO_infxn_functions.R`
@@ -164,11 +164,12 @@ Prior studies have shown a direct association between CP and HAI(Bonten 1998,Aja
 ### Data Files
 1. `final_dataset_for_models.csv`
 
-    **Description:** The final data ready for running conditional logistic regression (CLR) and XGBoost models for environmental-level and patient-level analyses
+    **Description:** The final data ready for running conditional logistic regression (CLR) and XGBoost models for environmental and patient analyses
 
     **Key Columns:**
-    - `run` : The name of organism infection for the sample.
-    - `group` : Whether the sample is classified as control or case in the matched study.
+    - `match`: The type of matching algorithm (environmental vs patient analysis)
+    - `run` : The name of target pathogen
+    - `group` : Flag for control or case 
     - `[abx]_0_60` : Prior number of *abx* courses used in the prior 60 days.
     - `[organism]_cp` : Calculated *organism* colonization pressure for the sample.
     - `elix_index_mortality` : Calculated elixhauser index for the sample.

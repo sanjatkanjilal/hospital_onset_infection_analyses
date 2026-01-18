@@ -22,7 +22,7 @@ Our goal with this code-base is to publish a prototype of an infection control i
 
 ---
 
-## File Descriptions (
+## File Descriptions
 
 ### Scripts
 1. `HO_infxn_functions.R`
@@ -169,7 +169,7 @@ Our goal with this code-base is to publish a prototype of an infection control i
     **Output Files**
     - None
 
-### Publicly-releaed data files (located in the Physionet repository: [Predictors of Hospital Onset Infection: A Matched Retrospective Cohort Dataset](https://physionet.org/content/hospital-onset-infection/1.0.0/)
+### Publicly-releaed data files (located in the Physionet repository: [Predictors of Hospital Onset Infection: A Matched Retrospective Cohort Dataset](https://physionet.org/content/hospital-onset-infection/1.0.0/))
 1. `final_dataset_for_models.csv`
 
     **Description:** The final data ready for running conditional logistic regression (CLR) and XGBoost models for environmental and patient analyses

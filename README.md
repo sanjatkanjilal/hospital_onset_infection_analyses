@@ -202,11 +202,11 @@ To ensure compliance with HIPAA guidelines and protect patient privacy:
 ---
 ## Usage Notes
 ### Ethical Considerations
-This study was approved by the Institutional Review Board (IRB) of Massachusetts General Brigham with a waived requirement for informed consent.
+This study was approved by the Institutional Review Board (IRB) of Massachusetts General Brigham health system with a waived requirement for informed consent.
 
 ---
 ## Citation
-When using the code and dataset, please cite: Sagers L, Wei Z, McKenna C, Chan C, Agan AA, Pak TR, Rhee C, Klompas M, Kanjilal S. 2025. Hospital unit colonization pressure and nosocomial acquisition of drug susceptible and drug resistant pathogens. medRxiv 2025.06.11.25329430. doi:10.1101/2025.06.11.25329430
+When using the code and dataset, please cite: Sagers L, Wei Z, McKenna C, Chan C, Agan AA, Pak TR, Rhee C, Klompas M, Kanjilal S. A proof-of-concept study for colonization pressure as a real-time machine-learning risk metric for nosocomial acquisition. Nature Communications 2026.
   
 ## Contact
 For questions, clarifications, or further support, please contact:

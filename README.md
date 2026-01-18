@@ -1,5 +1,7 @@
 # Determinants of hospital-acquired infection
 
+[![DOI](https://zenodo.org/badge/918228193.svg)](https://doi.org/10.5281/zenodo.18294181)
+
 ![cp_calculation](colonization_pressure.png)
 
 ## Description
